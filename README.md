@@ -25,6 +25,12 @@ A strictly typed foundation mapping the physical characteristics of microcontrol
 - A responsive, non-scrolling, three-panel Flexbox layout tailored for complex IDEs.
 - Custom dark-theme Tailwind configuration styled perfectly for deep focus.
 
+### 5. Component Factory System
+A highly rigid factory architecture (`componentFactory.ts`) ensuring flawless initialization of physical circuit components onto the canvas:
+- Dynamically generates fully formed `CircuitComponent` objects with standardized default properties and unique UUIDs.
+- Exhaustive pin layouts built directly into the factory (spanning the Arduino Uno's 200x140 boundary constraints, LCD 16x2 grid arrays, Breadboard rails, and standard 2-pin passives).
+- Utilizes strict `SCREAMING_SNAKE_CASE` constants tightly bound to the TypeScript union types to guarantee instantiation reliability and block invalid component requests.
+
 ## Tech Stack
 ### Frontend (`packages/frontend`)
 - React 18 & Vite
