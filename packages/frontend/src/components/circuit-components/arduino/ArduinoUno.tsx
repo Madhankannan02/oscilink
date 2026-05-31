@@ -389,40 +389,20 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
        *  and reliably receive all pointer events.
        */}
 
-      {/* Top DIGITAL (Group A+B) overlay — spans AREF(x≈60) to SCL(x≈145), y≈[5,16] */}
+      {/* Top pin row overlay  — spans AREF(x≈60) to ICSP_RESET(x=196), y≈[5,16] */}
       <Rect
         x={57} y={5.37}
-        width={92} height={10}
+        width={142} height={10}
         fill="rgba(0,0,0,0.001)"
         onMouseMove={handleOverlayMouseMove}
         onMouseLeave={handleOverlayMouseLeave}
         onMouseDown={handleOverlayMouseDown}
       />
 
-      {/* Top ICSP_RESET — standalone pin at x=196, give it a 6px wide hit zone */}
+      {/* Bottom pin row overlay — spans IOREF(x≈83) to A5(x≈145), y≈[124,135] */}
       <Rect
-        x={193} y={5.37}
-        width={6} height={10}
-        fill="rgba(0,0,0,0.001)"
-        onMouseMove={handleOverlayMouseMove}
-        onMouseLeave={handleOverlayMouseLeave}
-        onMouseDown={handleOverlayMouseDown}
-      />
-
-      {/* Bottom POWER block overlay — spans IOREF(x≈83) to VIN(x≈113), y≈[125,135] */}
-      <Rect
-        x={80.11} y={124.63}
-        width={35.45} height={10}
-        fill="rgba(0,0,0,0.001)"
-        onMouseMove={handleOverlayMouseMove}
-        onMouseLeave={handleOverlayMouseLeave}
-        onMouseDown={handleOverlayMouseDown}
-      />
-
-      {/* Bottom ANALOG IN block overlay — spans A0(x≈120) to A5(x≈145), y≈[125,135] */}
-      <Rect
-        x={117.26} y={124.63}
-        width={31.13} height={10}
+        x={80} y={124.63}
+        width={69} height={10}
         fill="rgba(0,0,0,0.001)"
         onMouseMove={handleOverlayMouseMove}
         onMouseLeave={handleOverlayMouseLeave}
