@@ -25,28 +25,60 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
 
   switch (type) {
     case 'ARDUINO_UNO': {
-      // Scale: 200x140
-      const leftYSpacing = 140 / 7;
-      pins['RESET'] = createPin('RESET', 'RESET', 'power', 'output', { x: 0, y: leftYSpacing * 1 });
-      pins['3V3'] = createPin('3V3', '3.3V', 'power', 'output', { x: 0, y: leftYSpacing * 2 });
-      pins['5V'] = createPin('5V', '5V', 'power', 'output', { x: 0, y: leftYSpacing * 3 });
-      pins['GND_1'] = createPin('GND_1', 'GND', 'ground', 'output', { x: 0, y: leftYSpacing * 4 });
-      pins['GND_2'] = createPin('GND_2', 'GND', 'ground', 'output', { x: 0, y: leftYSpacing * 5 });
-      pins['VIN'] = createPin('VIN', 'VIN', 'power', 'output', { x: 0, y: leftYSpacing * 6 });
+      // 32 exact pins based on user coordinates for 200x140 board
+      
+      const createPinVoltage = (pinId: string, label: string, pType: PinType, direction: PinDirection, pos: Point, voltage = 0): Pin => ({
+        id: pinId,
+        label,
+        type: pType,
+        direction,
+        position: pos,
+        connectedWireIds: [],
+        voltage
+      });
 
-      const rightYSpacing = 140 / 7;
-      pins['A0'] = createPin('A0', 'A0', 'analog', 'input', { x: 200, y: rightYSpacing * 1 });
-      pins['A1'] = createPin('A1', 'A1', 'analog', 'input', { x: 200, y: rightYSpacing * 2 });
-      pins['A2'] = createPin('A2', 'A2', 'analog', 'input', { x: 200, y: rightYSpacing * 3 });
-      pins['A3'] = createPin('A3', 'A3', 'analog', 'input', { x: 200, y: rightYSpacing * 4 });
-      pins['A4'] = createPin('A4', 'A4', 'I2C_SDA', 'input', { x: 200, y: rightYSpacing * 5 });
-      pins['A5'] = createPin('A5', 'A5', 'I2C_SCL', 'input', { x: 200, y: rightYSpacing * 6 });
+      // Top Left (y = 2)
+      pins['AREF'] = createPinVoltage('AREF', 'AREF', 'analog', 'input', { x: 42, y: 2 });
+      pins['GND_TOP'] = createPinVoltage('GND_TOP', 'GND', 'ground', 'output', { x: 50, y: 2 });
+      pins['D13'] = createPinVoltage('D13', '13', 'digital', 'bidirectional', { x: 58, y: 2 });
+      pins['D12'] = createPinVoltage('D12', '12', 'digital', 'bidirectional', { x: 66, y: 2 });
+      pins['D11'] = createPinVoltage('D11', '~11', 'PWM', 'bidirectional', { x: 74, y: 2 });
+      pins['D10'] = createPinVoltage('D10', '~10', 'PWM', 'bidirectional', { x: 82, y: 2 });
+      pins['D9'] = createPinVoltage('D9', '~9', 'PWM', 'bidirectional', { x: 90, y: 2 });
+      pins['D8'] = createPinVoltage('D8', '8', 'digital', 'bidirectional', { x: 98, y: 2 });
+      pins['D7'] = createPinVoltage('D7', '7', 'digital', 'bidirectional', { x: 106, y: 2 });
+      pins['D6'] = createPinVoltage('D6', '~6', 'PWM', 'bidirectional', { x: 114, y: 2 });
 
-      const bottomXSpacing = 200 / 15;
-      for (let i = 0; i <= 13; i++) {
-        const pType: PinType = [3, 5, 6, 9, 10, 11].includes(i) ? 'PWM' : 'digital';
-        pins[`D${i}`] = createPin(`D${i}`, `D${i}`, pType, 'bidirectional', { x: bottomXSpacing * (i + 1), y: 140 });
-      }
+      // Top Right (y = 2)
+      pins['D5'] = createPinVoltage('D5', '~5', 'PWM', 'bidirectional', { x: 128, y: 2 });
+      pins['D4'] = createPinVoltage('D4', '4', 'digital', 'bidirectional', { x: 136, y: 2 });
+      pins['D3'] = createPinVoltage('D3', '~3', 'PWM', 'bidirectional', { x: 144, y: 2 });
+      pins['D2'] = createPinVoltage('D2', '2', 'digital', 'bidirectional', { x: 152, y: 2 });
+      pins['TX'] = createPinVoltage('TX', 'TX1', 'digital', 'bidirectional', { x: 160, y: 2 });
+      pins['RX'] = createPinVoltage('RX', 'RX0', 'digital', 'bidirectional', { x: 168, y: 2 });
+      pins['SDA'] = createPinVoltage('SDA', 'SDA', 'I2C_SDA', 'bidirectional', { x: 176, y: 2 });
+      pins['SCL'] = createPinVoltage('SCL', 'SCL', 'I2C_SCL', 'bidirectional', { x: 184, y: 2 });
+
+      // Extra ICSP to reach 32 pins
+      pins['ICSP_RESET'] = createPinVoltage('ICSP_RESET', 'RST', 'digital', 'input', { x: 196, y: 2 });
+
+      // Bottom Power (y = 138)
+      pins['IOREF'] = createPinVoltage('IOREF', 'IOREF', 'power', 'output', { x: 42, y: 138 });
+      pins['RESET'] = createPinVoltage('RESET', 'RESET', 'digital', 'input', { x: 50, y: 138 });
+      pins['3V3'] = createPinVoltage('3V3', '3.3V', 'power', 'output', { x: 58, y: 138 }, 3.3);
+      pins['5V'] = createPinVoltage('5V', '5V', 'power', 'output', { x: 66, y: 138 }, 5);
+      pins['GND_1'] = createPinVoltage('GND_1', 'GND', 'ground', 'output', { x: 74, y: 138 });
+      pins['GND_2'] = createPinVoltage('GND_2', 'GND', 'ground', 'output', { x: 82, y: 138 });
+      pins['VIN'] = createPinVoltage('VIN', 'VIN', 'power', 'input', { x: 90, y: 138 });
+
+      // Bottom Analog (y = 138)
+      pins['A0'] = createPinVoltage('A0', 'A0', 'analog', 'input', { x: 110, y: 138 });
+      pins['A1'] = createPinVoltage('A1', 'A1', 'analog', 'input', { x: 118, y: 138 });
+      pins['A2'] = createPinVoltage('A2', 'A2', 'analog', 'input', { x: 126, y: 138 });
+      pins['A3'] = createPinVoltage('A3', 'A3', 'analog', 'input', { x: 134, y: 138 });
+      pins['A4'] = createPinVoltage('A4', 'A4', 'I2C_SDA', 'input', { x: 142, y: 138 });
+      pins['A5'] = createPinVoltage('A5', 'A5', 'I2C_SCL', 'input', { x: 150, y: 138 });
+
       break;
     }
 

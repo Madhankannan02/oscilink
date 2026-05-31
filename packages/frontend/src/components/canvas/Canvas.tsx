@@ -4,6 +4,7 @@ import { useWorkspaceStore } from '../../store/workspaceStore';
 import { Grid } from './Grid';
 import { Plus, Minus, Maximize } from 'lucide-react';
 import Konva from 'konva';
+import { ArduinoUno } from '../circuit-components/arduino/ArduinoUno';
 
 export const CanvasContext = createContext<{ stopPropagation: (e: any) => void }>({
   stopPropagation: (e) => e.cancelBubble = true,
@@ -213,6 +214,14 @@ export const Canvas: React.FC = () => {
               {/* Layer 3: Component layer */}
               <Group name="layer3-components">
                 <CanvasContext.Provider value={{ stopPropagation: (e) => { e.cancelBubble = true; } }}>
+                  {components.map(comp => {
+                    switch (comp.type) {
+                      case 'ARDUINO_UNO':
+                        return <ArduinoUno key={comp.id} component={comp} />;
+                      default:
+                        return null;
+                    }
+                  })}
                 </CanvasContext.Provider>
               </Group>
               
