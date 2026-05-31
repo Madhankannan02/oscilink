@@ -389,52 +389,20 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
        *  and reliably receive all pointer events.
        */}
 
-      {/* Top DIGITAL (Group A+B) overlay — spans AREF(x≈60) to SCL(x≈145), y≈[5,16]
-       *  Group A: Rect x={225} y={26} w={190} → scaled x=57.7, right=106.4
-       *  Group B: Rect x={424} y={26} w={152} → scaled x=108.7, right=147.7
-       *  Pins: AREF(60.0) … SCL(145.38), spacing≈4.91px
-       */}
+      {/* Top pin row overlay  — spans AREF(x≈60) to ICSP_RESET(x=196), y≈[5,16] */}
       <Rect
         x={57} y={5.37}
-        width={92} height={10}
+        width={142} height={10}
         fill="rgba(0,0,0,0.001)"
         onMouseMove={handleOverlayMouseMove}
         onMouseLeave={handleOverlayMouseLeave}
         onMouseDown={handleOverlayMouseDown}
       />
 
-      {/* Top ICSP_RESET — standalone pin at x=196, give it a 6px wide hit zone */}
+      {/* Bottom pin row overlay — spans IOREF(x≈83) to A5(x≈145), y≈[124,135] */}
       <Rect
-        x={193} y={5.37}
-        width={6} height={10}
-        fill="rgba(0,0,0,0.001)"
-        onMouseMove={handleOverlayMouseMove}
-        onMouseLeave={handleOverlayMouseLeave}
-        onMouseDown={handleOverlayMouseDown}
-      />
-
-      {/* Bottom POWER block overlay — spans IOREF(x≈83) to VIN(x≈113), y≈[125,135]
-       *  Connector box in unscaled PCB: Rect x={296} y={486} width={152}
-       *  Scaled to component space: x=75.9, w=38.97 → right edge≈114.9
-       *  Pins: IOREF(83.11) … VIN(112.56), spacing≈4.91px
-       */}
-      <Rect
-        x={80.11} y={124.63}
-        width={35.45} height={10}
-        fill="rgba(0,0,0,0.001)"
-        onMouseMove={handleOverlayMouseMove}
-        onMouseLeave={handleOverlayMouseLeave}
-        onMouseDown={handleOverlayMouseDown}
-      />
-
-      {/* Bottom ANALOG IN block overlay — spans A0(x≈120) to A5(x≈145), y≈[125,135]
-       *  Connector box in unscaled PCB: Rect x={460} y={486} width={116}
-       *  Scaled: x=117.9, w=29.74 → right edge≈147.7
-       *  Pins: A0(120.26) … A5(145.38), spacing≈5.03px
-       */}
-      <Rect
-        x={117.26} y={124.63}
-        width={31.13} height={10}
+        x={80} y={124.63}
+        width={69} height={10}
         fill="rgba(0,0,0,0.001)"
         onMouseMove={handleOverlayMouseMove}
         onMouseLeave={handleOverlayMouseLeave}
