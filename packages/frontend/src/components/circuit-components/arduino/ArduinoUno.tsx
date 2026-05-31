@@ -100,7 +100,7 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
     let closestDist = Infinity;
 
     for (const pin of pinList) {
-      if (pin.id === 'NC') continue;
+      if (pin.id.startsWith('NC')) continue;
       const dx = Math.abs(local.x - pin.position.x);
       const dy = Math.abs(local.y - pin.position.y);
       if (dx <= SNAP_X && dy <= SNAP_Y) {
@@ -195,20 +195,20 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
         {[[48, 310], [180, 460], [280, 390], [340, 310], [600, 110], [700, 80]].map(([cx, cy], i) => (
           <Circle key={`via3-${i}`} x={cx} y={cy} radius={2.5} fill="#cca43b" opacity={0.6} />
         ))}
-        <Rect x={310} y={93} width={266} height={2} fill="white" opacity={0.85} />
-        <Text x={310} y={99} width={266} text="DIGITAL (PWM ~)" fill="white" fontSize={14} fontFamily="sans-serif" fontStyle="900" opacity={0.85} align="center" letterSpacing={1} />
-        <Rect x={324} y={446} width={124} height={2} fill="white" opacity={0.85} />
-        <Text x={324} y={428} width={124} text="POWER" fill="white" fontSize={14} fontFamily="sans-serif" fontStyle="900" opacity={0.85} align="right" letterSpacing={0.5} />
-        <Rect x={460} y={446} width={116} height={2} fill="white" opacity={0.85} />
-        <Text x={460} y={428} width={116} text="ANALOG IN" fill="white" fontSize={14.5} fontFamily="sans-serif" fontStyle="900" opacity={0.85} align="center" letterSpacing={0.5} />
-        <Group x={358} y={146} scaleX={0.85} scaleY={0.85}>
+        <Rect x={310} y={105} width={266} height={2} fill="white" opacity={0.85} />
+        <Text x={310} y={111} width={266} text="DIGITAL (PWM ~)" fill="white" fontSize={14} fontFamily="sans-serif" fontStyle="900" opacity={0.85} align="center" letterSpacing={1} />
+        <Rect x={324} y={420} width={124} height={2} fill="white" opacity={0.85} />
+        <Text x={324} y={402} width={124} text="POWER" fill="white" fontSize={14} fontFamily="sans-serif" fontStyle="900" opacity={0.85} align="right" letterSpacing={0.5} />
+        <Rect x={460} y={420} width={116} height={2} fill="white" opacity={0.85} />
+        <Text x={460} y={402} width={116} text="ANALOG IN" fill="white" fontSize={14.5} fontFamily="sans-serif" fontStyle="900" opacity={0.85} align="center" letterSpacing={0.5} />
+        <Group x={400} y={146} scaleX={0.85} scaleY={0.85}>
           <Circle x={36} y={32} radius={25} stroke="white" strokeWidth={8} />
           <Rect x={24} y={28} width={24} height={8} fill="white" cornerRadius={1} />
           <Circle x={86} y={32} radius={25} stroke="white" strokeWidth={8} />
           <Rect x={74} y={28} width={24} height={8} fill="white" cornerRadius={1} />
           <Rect x={82} y={20} width={8} height={24} fill="white" cornerRadius={1} />
         </Group>
-        <Text x={346} y={205} width={130} text="ARDUINO" fill="white" fontSize={22} fontFamily="sans-serif" fontStyle="900" letterSpacing={3} align="center" />
+        <Text x={352} y={205} width={180} text="ARDUINO" fill="white" fontSize={22} fontFamily="sans-serif" fontStyle="900" letterSpacing={3} align="center" />
         <Rect x={522} y={146} width={138} height={56} stroke="white" strokeWidth={2.5} dash={[6, 4]} cornerRadius={12} opacity={0.95} />
         <Text x={522} y={160} width={138} text="UNO" fill="white" fontSize={32} fontFamily="sans-serif" fontStyle="900" letterSpacing={2} align="center" />
         <Text x={284} y={141} text="L" fill="white" fontSize={14} fontFamily="sans-serif" fontStyle="900" opacity={0.85} />
@@ -245,7 +245,7 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
             <Text x={-20} y={-5} text="16.000" fontSize={10} fontFamily="monospace" fontStyle="bold" fill="#374151" />
           </Group>
         </Group>
-        <Group x={334} y={328}>
+        <Group x={334} y={270}>
           <Rect width={358} height={82} fill="#171717" stroke="#404040" strokeWidth={2} cornerRadius={6} shadowColor="black" shadowBlur={24} shadowOpacity={0.6} shadowOffset={{ x: 2, y: 12 }} />
           <Path data="M 0,27 A 14,14 0 0,0 0,55 Z" fill="#1d70b8" stroke="#404040" strokeWidth={2} />
           <Circle x={16} y={74} radius={5.5} fill="#171717" stroke="#404040" strokeWidth={1} />
@@ -311,7 +311,7 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
           glowCol = '#22d3ee';
         }
 
-        const isNC = pin.id === 'NC';
+        const isNC = pin.id.startsWith('NC');
         const isTop = pin.position.y < 70;
 
         return (
@@ -347,12 +347,11 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
               <Text
                 text={pin.label}
                 x={w / 2}
-                y={isTop ? 8 : -8}
-                width={20} align="center"
+                y={isTop ? h + 3.5 : -3.5}
                 fontSize={3} fontFamily="sans-serif" fontStyle="bold"
                 fill="#ffffff" opacity={0.85}
                 rotation={isTop ? 90 : -90}
-                offsetX={10} offsetY={1.5}
+                offsetX={0} offsetY={1.5}
               />
             )}
             {/* Tooltip */}
@@ -389,20 +388,30 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
        *  and reliably receive all pointer events.
        */}
 
-      {/* Top pin row overlay  — spans AREF(x≈60) to ICSP_RESET(x=196), y≈[5,16] */}
+      {/* Top DIGITAL (Group A+B) overlay — spans AREF(x≈60) to RX(x≈145), y≈[5,16] */}
       <Rect
         x={57} y={5.37}
-        width={142} height={10}
+        width={92} height={10}
         fill="rgba(0,0,0,0.001)"
         onMouseMove={handleOverlayMouseMove}
         onMouseLeave={handleOverlayMouseLeave}
         onMouseDown={handleOverlayMouseDown}
       />
 
-      {/* Bottom pin row overlay — spans IOREF(x≈83) to A5(x≈145), y≈[124,135] */}
+      {/* Bottom POWER block overlay — spans IOREF(x=78.20) to Vin(x=112.56), y≈[125,135] */}
       <Rect
-        x={80} y={124.63}
-        width={69} height={10}
+        x={75.20} y={124.63}
+        width={40.36} height={10}
+        fill="rgba(0,0,0,0.001)"
+        onMouseMove={handleOverlayMouseMove}
+        onMouseLeave={handleOverlayMouseLeave}
+        onMouseDown={handleOverlayMouseDown}
+      />
+
+      {/* Bottom ANALOG IN block overlay — spans A0(x≈120) to A5(x≈145), y≈[125,135] */}
+      <Rect
+        x={117.26} y={124.63}
+        width={31.13} height={10}
         fill="rgba(0,0,0,0.001)"
         onMouseMove={handleOverlayMouseMove}
         onMouseLeave={handleOverlayMouseLeave}

@@ -46,6 +46,8 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
       const gA_startX = 234;
       const gA_space = 172 / 9;
       const groupA = [
+        { id: 'NC_SCL', type: 'digital', dir: 'input', label: '' },
+        { id: 'NC_SDA', type: 'digital', dir: 'input', label: '' },
         { id: 'AREF', type: 'analog', dir: 'input', label: 'AREF' },
         { id: 'GND_TOP', type: 'ground', dir: 'output', label: 'GND' },
         { id: 'D13', type: 'digital', dir: 'bidirectional', label: '13' },
@@ -53,9 +55,7 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
         { id: 'D11', type: 'PWM', dir: 'bidirectional', label: '~11' },
         { id: 'D10', type: 'PWM', dir: 'bidirectional', label: '~10' },
         { id: 'D9', type: 'PWM', dir: 'bidirectional', label: '~9' },
-        { id: 'D8', type: 'digital', dir: 'bidirectional', label: '8' },
-        { id: 'D7', type: 'digital', dir: 'bidirectional', label: '7' },
-        { id: 'D6', type: 'PWM', dir: 'bidirectional', label: '~6' }
+        { id: 'D8', type: 'digital', dir: 'bidirectional', label: '8' }
       ];
       groupA.forEach((p, i) => {
         pins[p.id] = createPinVoltage(p.id, p.label, p.type as PinType, p.dir as PinDirection, {
@@ -67,14 +67,14 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
       const gB_startX = 433;
       const gB_space = 134 / 7;
       const groupB = [
+        { id: 'D7', type: 'digital', dir: 'bidirectional', label: '7' },
+        { id: 'D6', type: 'PWM', dir: 'bidirectional', label: '~6' },
         { id: 'D5', type: 'PWM', dir: 'bidirectional', label: '~5' },
         { id: 'D4', type: 'digital', dir: 'bidirectional', label: '4' },
         { id: 'D3', type: 'PWM', dir: 'bidirectional', label: '~3' },
         { id: 'D2', type: 'digital', dir: 'bidirectional', label: '2' },
-        { id: 'TX', type: 'digital', dir: 'bidirectional', label: 'TX1' },
-        { id: 'RX', type: 'digital', dir: 'bidirectional', label: 'RX0' },
-        { id: 'SDA', type: 'I2C_SDA', dir: 'bidirectional', label: 'SDA' },
-        { id: 'SCL', type: 'I2C_SCL', dir: 'bidirectional', label: 'SCL' }
+        { id: 'TX', type: 'digital', dir: 'bidirectional', label: 'TX→1' },
+        { id: 'RX', type: 'digital', dir: 'bidirectional', label: 'RX←0' }
       ];
       groupB.forEach((p, i) => {
         pins[p.id] = createPinVoltage(p.id, p.label, p.type as PinType, p.dir as PinDirection, {
@@ -82,20 +82,18 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
         });
       });
 
-      // Extra ICSP to reach 32 pins (placed horizontally aligned with top row, far right)
-      pins['ICSP_RESET'] = createPinVoltage('ICSP_RESET', 'RST', 'digital', 'input', { x: 196, y: topY });
-
-      // Group C: Bottom Power (7 pins mapped to holes 2-8 of the 8-hole header box at 296, 152)
-      const gC_startX = 305 + (134 / 7); // Start at hole index 1
+      // Group C: Bottom Power (8 pins mapped to holes 1-8 of the 8-hole header box at 296, 152)
+      const gC_startX = 305; // Start at hole index 0
       const gC_space = 134 / 7;
       const groupC = [
+        { id: 'NC_POWER', type: 'digital', dir: 'input', label: '' },
         { id: 'IOREF', type: 'power', dir: 'output', label: 'IOREF' },
         { id: 'RESET', type: 'digital', dir: 'input', label: 'RESET' },
         { id: '3V3', type: 'power', dir: 'output', label: '3.3V', v: 3.3 },
         { id: '5V', type: 'power', dir: 'output', label: '5V', v: 5 },
         { id: 'GND_1', type: 'ground', dir: 'output', label: 'GND' },
         { id: 'GND_2', type: 'ground', dir: 'output', label: 'GND' },
-        { id: 'VIN', type: 'power', dir: 'input', label: 'VIN' }
+        { id: 'VIN', type: 'power', dir: 'input', label: 'Vin' }
       ];
       groupC.forEach((p, i) => {
         pins[p.id] = createPinVoltage(p.id, p.label, p.type as PinType, p.dir as PinDirection, {
