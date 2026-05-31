@@ -294,54 +294,70 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
             key={pin.id} 
             x={pin.position.x - w/2} // center the square on the coordinate
             y={pin.position.y - h/2}
+            onMouseEnter={() => {
+              if(!isNC) {
+                setHoveredPin(pin.id);
+                document.body.style.cursor = 'crosshair';
+              }
+            }}
+            onMouseLeave={() => {
+              setHoveredPin(null);
+              document.body.style.cursor = 'default';
+            }}
+            onMouseDown={(e) => {
+              if(!isNC) handlePinMouseDown(e, pin.id);
+            }}
           >
+            {/* Expanded transparent hit area for easier interaction */}
+            <Rect 
+              x={0}
+              y={-h}
+              width={w}
+              height={h * 3}
+              fill="transparent"
+            />
+            
             {/* The outer square matching the header slot */}
             <Rect
-              width={w}
-              height={h}
+              x={isHovered ? -0.5 : 0}
+              y={isHovered ? -0.5 : 0}
+              width={isHovered ? w + 1 : w}
+              height={isHovered ? h + 1 : h}
               fill="#1a1a1a"
               stroke={isHovered ? '#fbbf24' : '#404040'}
               strokeWidth={isHovered ? 1 : 0.5}
               cornerRadius={0.5}
               shadowColor={isHovered ? '#fbbf24' : 'transparent'}
               shadowBlur={isHovered ? 4 : 0}
-              onMouseEnter={() => {
-                if(!isNC) {
-                  setHoveredPin(pin.id);
-                  document.body.style.cursor = 'crosshair';
-                }
-              }}
-              onMouseLeave={() => {
-                setHoveredPin(null);
-                document.body.style.cursor = 'default';
-              }}
-              onMouseDown={(e) => {
-                if(!isNC) handlePinMouseDown(e, pin.id);
-              }}
+              listening={false}
             />
             {/* Inner metal contact core */}
             <Circle
               x={w/2}
               y={h/2}
-              radius={1}
+              radius={isHovered ? 1.5 : 1}
               fill={fillCol}
               shadowColor={glowCol}
               shadowBlur={glowCol !== 'transparent' ? 3 : 0}
               listening={false}
             />
 
-            {/* Pin Text Label rotated -90 */}
+            {/* Pin Text Label rotated to point inwards */}
             {!isNC && (
               <Text
                 text={labelText}
-                x={w/2 - 1.2}
-                y={pin.position.y < 70 ? h + 9 : -2}
+                x={w/2}
+                y={pin.position.y < 70 ? 8 : -8}
+                width={20}
+                align="center"
                 fontSize={3}
                 fontFamily="sans-serif"
                 fontStyle="bold"
                 fill="#ffffff"
                 opacity={0.85}
-                rotation={-90}
+                rotation={pin.position.y < 70 ? 90 : -90}
+                offsetX={10}
+                offsetY={1.5}
                 listening={false}
               />
             )}

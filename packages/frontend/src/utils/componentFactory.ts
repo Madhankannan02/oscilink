@@ -25,7 +25,9 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
 
   switch (type) {
     case 'ARDUINO_UNO': {
-      // 32 exact pins based on user coordinates for 200x140 board
+      // 32 exact pins based on true visual alignment with black header boxes
+      const sx = 200 / 780;
+      const sy = 140 / 540;
       
       const createPinVoltage = (pinId: string, label: string, pType: PinType, direction: PinDirection, pos: Point, voltage = 0): Pin => ({
         id: pinId,
@@ -37,47 +39,86 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
         voltage
       });
 
-      // Top Left (y = 2)
-      pins['AREF'] = createPinVoltage('AREF', 'AREF', 'analog', 'input', { x: 42, y: 2 });
-      pins['GND_TOP'] = createPinVoltage('GND_TOP', 'GND', 'ground', 'output', { x: 50, y: 2 });
-      pins['D13'] = createPinVoltage('D13', '13', 'digital', 'bidirectional', { x: 58, y: 2 });
-      pins['D12'] = createPinVoltage('D12', '12', 'digital', 'bidirectional', { x: 66, y: 2 });
-      pins['D11'] = createPinVoltage('D11', '~11', 'PWM', 'bidirectional', { x: 74, y: 2 });
-      pins['D10'] = createPinVoltage('D10', '~10', 'PWM', 'bidirectional', { x: 82, y: 2 });
-      pins['D9'] = createPinVoltage('D9', '~9', 'PWM', 'bidirectional', { x: 90, y: 2 });
-      pins['D8'] = createPinVoltage('D8', '8', 'digital', 'bidirectional', { x: 98, y: 2 });
-      pins['D7'] = createPinVoltage('D7', '7', 'digital', 'bidirectional', { x: 106, y: 2 });
-      pins['D6'] = createPinVoltage('D6', '~6', 'PWM', 'bidirectional', { x: 114, y: 2 });
+      const topY = 40 * sy;
+      const bottomY = 500 * sy;
 
-      // Top Right (y = 2)
-      pins['D5'] = createPinVoltage('D5', '~5', 'PWM', 'bidirectional', { x: 128, y: 2 });
-      pins['D4'] = createPinVoltage('D4', '4', 'digital', 'bidirectional', { x: 136, y: 2 });
-      pins['D3'] = createPinVoltage('D3', '~3', 'PWM', 'bidirectional', { x: 144, y: 2 });
-      pins['D2'] = createPinVoltage('D2', '2', 'digital', 'bidirectional', { x: 152, y: 2 });
-      pins['TX'] = createPinVoltage('TX', 'TX1', 'digital', 'bidirectional', { x: 160, y: 2 });
-      pins['RX'] = createPinVoltage('RX', 'RX0', 'digital', 'bidirectional', { x: 168, y: 2 });
-      pins['SDA'] = createPinVoltage('SDA', 'SDA', 'I2C_SDA', 'bidirectional', { x: 176, y: 2 });
-      pins['SCL'] = createPinVoltage('SCL', 'SCL', 'I2C_SCL', 'bidirectional', { x: 184, y: 2 });
+      // Group A: Top Left Digital (10 pins, Box: 225, 190)
+      const gA_startX = 234;
+      const gA_space = 172 / 9;
+      const groupA = [
+        { id: 'AREF', type: 'analog', dir: 'input', label: 'AREF' },
+        { id: 'GND_TOP', type: 'ground', dir: 'output', label: 'GND' },
+        { id: 'D13', type: 'digital', dir: 'bidirectional', label: '13' },
+        { id: 'D12', type: 'digital', dir: 'bidirectional', label: '12' },
+        { id: 'D11', type: 'PWM', dir: 'bidirectional', label: '~11' },
+        { id: 'D10', type: 'PWM', dir: 'bidirectional', label: '~10' },
+        { id: 'D9', type: 'PWM', dir: 'bidirectional', label: '~9' },
+        { id: 'D8', type: 'digital', dir: 'bidirectional', label: '8' },
+        { id: 'D7', type: 'digital', dir: 'bidirectional', label: '7' },
+        { id: 'D6', type: 'PWM', dir: 'bidirectional', label: '~6' }
+      ];
+      groupA.forEach((p, i) => {
+        pins[p.id] = createPinVoltage(p.id, p.label, p.type as PinType, p.dir as PinDirection, {
+          x: (gA_startX + i * gA_space) * sx, y: topY
+        });
+      });
 
-      // Extra ICSP to reach 32 pins
-      pins['ICSP_RESET'] = createPinVoltage('ICSP_RESET', 'RST', 'digital', 'input', { x: 196, y: 2 });
+      // Group B: Top Right Digital (8 pins, Box: 424, 152)
+      const gB_startX = 433;
+      const gB_space = 134 / 7;
+      const groupB = [
+        { id: 'D5', type: 'PWM', dir: 'bidirectional', label: '~5' },
+        { id: 'D4', type: 'digital', dir: 'bidirectional', label: '4' },
+        { id: 'D3', type: 'PWM', dir: 'bidirectional', label: '~3' },
+        { id: 'D2', type: 'digital', dir: 'bidirectional', label: '2' },
+        { id: 'TX', type: 'digital', dir: 'bidirectional', label: 'TX1' },
+        { id: 'RX', type: 'digital', dir: 'bidirectional', label: 'RX0' },
+        { id: 'SDA', type: 'I2C_SDA', dir: 'bidirectional', label: 'SDA' },
+        { id: 'SCL', type: 'I2C_SCL', dir: 'bidirectional', label: 'SCL' }
+      ];
+      groupB.forEach((p, i) => {
+        pins[p.id] = createPinVoltage(p.id, p.label, p.type as PinType, p.dir as PinDirection, {
+          x: (gB_startX + i * gB_space) * sx, y: topY
+        });
+      });
 
-      // Bottom Power (y = 138)
-      pins['IOREF'] = createPinVoltage('IOREF', 'IOREF', 'power', 'output', { x: 42, y: 138 });
-      pins['RESET'] = createPinVoltage('RESET', 'RESET', 'digital', 'input', { x: 50, y: 138 });
-      pins['3V3'] = createPinVoltage('3V3', '3.3V', 'power', 'output', { x: 58, y: 138 }, 3.3);
-      pins['5V'] = createPinVoltage('5V', '5V', 'power', 'output', { x: 66, y: 138 }, 5);
-      pins['GND_1'] = createPinVoltage('GND_1', 'GND', 'ground', 'output', { x: 74, y: 138 });
-      pins['GND_2'] = createPinVoltage('GND_2', 'GND', 'ground', 'output', { x: 82, y: 138 });
-      pins['VIN'] = createPinVoltage('VIN', 'VIN', 'power', 'input', { x: 90, y: 138 });
+      // Extra ICSP to reach 32 pins (placed horizontally aligned with top row, far right)
+      pins['ICSP_RESET'] = createPinVoltage('ICSP_RESET', 'RST', 'digital', 'input', { x: 196, y: topY });
 
-      // Bottom Analog (y = 138)
-      pins['A0'] = createPinVoltage('A0', 'A0', 'analog', 'input', { x: 110, y: 138 });
-      pins['A1'] = createPinVoltage('A1', 'A1', 'analog', 'input', { x: 118, y: 138 });
-      pins['A2'] = createPinVoltage('A2', 'A2', 'analog', 'input', { x: 126, y: 138 });
-      pins['A3'] = createPinVoltage('A3', 'A3', 'analog', 'input', { x: 134, y: 138 });
-      pins['A4'] = createPinVoltage('A4', 'A4', 'I2C_SDA', 'input', { x: 142, y: 138 });
-      pins['A5'] = createPinVoltage('A5', 'A5', 'I2C_SCL', 'input', { x: 150, y: 138 });
+      // Group C: Bottom Power (7 pins mapped to holes 2-8 of the 8-hole header box at 296, 152)
+      const gC_startX = 305 + (134 / 7); // Start at hole index 1
+      const gC_space = 134 / 7;
+      const groupC = [
+        { id: 'IOREF', type: 'power', dir: 'output', label: 'IOREF' },
+        { id: 'RESET', type: 'digital', dir: 'input', label: 'RESET' },
+        { id: '3V3', type: 'power', dir: 'output', label: '3.3V', v: 3.3 },
+        { id: '5V', type: 'power', dir: 'output', label: '5V', v: 5 },
+        { id: 'GND_1', type: 'ground', dir: 'output', label: 'GND' },
+        { id: 'GND_2', type: 'ground', dir: 'output', label: 'GND' },
+        { id: 'VIN', type: 'power', dir: 'input', label: 'VIN' }
+      ];
+      groupC.forEach((p, i) => {
+        pins[p.id] = createPinVoltage(p.id, p.label, p.type as PinType, p.dir as PinDirection, {
+          x: (gC_startX + i * gC_space) * sx, y: bottomY
+        }, p.v || 0);
+      });
+
+      // Group D: Bottom Analog (6 pins, Box: 460, 116)
+      const gD_startX = 469;
+      const gD_space = 98 / 5;
+      const groupD = [
+        { id: 'A0', type: 'analog', dir: 'input', label: 'A0' },
+        { id: 'A1', type: 'analog', dir: 'input', label: 'A1' },
+        { id: 'A2', type: 'analog', dir: 'input', label: 'A2' },
+        { id: 'A3', type: 'analog', dir: 'input', label: 'A3' },
+        { id: 'A4', type: 'I2C_SDA', dir: 'input', label: 'A4' },
+        { id: 'A5', type: 'I2C_SCL', dir: 'input', label: 'A5' }
+      ];
+      groupD.forEach((p, i) => {
+        pins[p.id] = createPinVoltage(p.id, p.label, p.type as PinType, p.dir as PinDirection, {
+          x: (gD_startX + i * gD_space) * sx, y: bottomY
+        });
+      });
 
       break;
     }
