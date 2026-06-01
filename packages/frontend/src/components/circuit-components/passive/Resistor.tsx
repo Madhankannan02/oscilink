@@ -45,7 +45,6 @@ export const Resistor: React.FC<ResistorProps> = ({ component }) => {
   };
 
   const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
-    setIsDragging(false);
     useWorkspaceStore.getState().updateComponentPosition(component.id, {
       x: e.target.x(),
       y: e.target.y()
