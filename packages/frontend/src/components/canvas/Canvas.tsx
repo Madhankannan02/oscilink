@@ -7,6 +7,8 @@ import Konva from 'konva';
 import { ArduinoUno } from '../circuit-components/arduino/ArduinoUno';
 import { useWireDrawing } from '../../hooks/useWireDrawing';
 import { WireLayer } from './WireLayer';
+import { ComponentLayer } from './ComponentLayer';
+import { InteractionLayer } from './InteractionLayer';
 import { PinRef } from '../../types/components';
 
 export const CanvasContext = createContext<{ 
@@ -222,42 +224,23 @@ export const Canvas: React.FC = () => {
           {/* Layer 1: Grid */}
           <Grid width={dimensions.width} height={dimensions.height} />
           
-          <Layer>
-            <Group 
-              x={viewport.x} 
-              y={viewport.y} 
-              scaleX={viewport.scale} 
-              scaleY={viewport.scale}
-            >
-              {/* Layer 2: Wire layer */}
-              <Group name="layer2-wires">
-                <WireLayer previewWirePoints={previewWirePoints} hoveredPin={hoveredPin} />
-              </Group>
-              
-              {/* Layer 3: Component layer */}
-              <Group name="layer3-components">
-                <CanvasContext.Provider value={{ 
-                  stopPropagation: (e) => { e.cancelBubble = true; },
-                  handlePinMouseDown,
-                  handlePinMouseEnter,
-                  handlePinMouseLeave
-                }}>
-                  {components.map(comp => {
-                    switch (comp.type) {
-                      case 'ARDUINO_UNO':
-                        return <ArduinoUno key={comp.id} component={comp} />;
-                      default:
-                        return null;
-                    }
-                  })}
-                </CanvasContext.Provider>
-              </Group>
-              
-              {/* Layer 4: Overlay layer */}
-              <Group name="layer4-overlay" listening={false}>
-              </Group>
-            </Group>
-          </Layer>
+          <CanvasContext.Provider value={{ 
+            stopPropagation: (e) => { e.cancelBubble = true; },
+            handlePinMouseDown,
+            handlePinMouseEnter,
+            handlePinMouseLeave
+          }}>
+            {/* Layer 2: Wire layer */}
+            <Layer x={viewport.x} y={viewport.y} scaleX={viewport.scale} scaleY={viewport.scale}>
+              <WireLayer previewWirePoints={previewWirePoints} hoveredPin={hoveredPin} />
+            </Layer>
+            
+            {/* Layer 3: Component layer */}
+            <ComponentLayer />
+            
+            {/* Layer 4: Interaction layer */}
+            <InteractionLayer />
+          </CanvasContext.Provider>
         </Stage>
       )}
 
