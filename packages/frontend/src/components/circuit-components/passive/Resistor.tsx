@@ -32,6 +32,7 @@ function getResistorBands(resistance: number): string[] {
 }
 
 export const Resistor: React.FC<ResistorProps> = ({ component }) => {
+  const [hoveredPin, setHoveredPin] = useState<string | null>(null);
   const outerGroupRef = useRef<any>(null);
 
   const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = React.useContext(CanvasContext);

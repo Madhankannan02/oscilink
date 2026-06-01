@@ -11,6 +11,7 @@ interface LEDProps {
 }
 
 export const LED: React.FC<LEDProps> = ({ component }) => {
+  const [hoveredPin, setHoveredPin] = useState<string | null>(null);
   const outerGroupRef = useRef<any>(null);
   const [displayedBrightness, setDisplayedBrightness] = useState(0);
   const animFrameRef = useRef<number>();
