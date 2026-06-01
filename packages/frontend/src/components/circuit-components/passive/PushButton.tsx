@@ -5,6 +5,7 @@ import Konva from 'konva';
 import { CircuitComponent } from '../../../types/components';
 import { useWorkspaceStore } from '../../../store/workspaceStore';
 import { useSimulationStore } from '../../../store/simulationStore';
+import { CanvasContext } from '../../../canvas/Canvas';
 
 interface PushButtonProps {
   component: CircuitComponent;
@@ -18,6 +19,8 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
   
   const outerGroupRef = useRef<any>(null);
   const capRef = useRef<any>(null);
+
+  const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = React.useContext(CanvasContext);
 
   const selectedComponentIds = useWorkspaceStore((state) => state.selectedComponentIds);
   const isSelected = selectedComponentIds.includes(component.id);
@@ -40,12 +43,9 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
     useWorkspaceStore.getState().selectComponent(component.id, e.evt.shiftKey);
   };
 
-  const handlePinMouseDown = (e: KonvaEventObject<MouseEvent>, pinId: string) => {
+  const onPinMouseDown = (e: KonvaEventObject<MouseEvent>, pinId: string) => {
     e.cancelBubble = true;
-    useWorkspaceStore.getState().startWireDrawing({
-      componentId: component.id,
-      pinId: pinId
-    });
+    handlePinMouseDown({ componentId: component.id, pinId });
   };
 
   const handleButtonDown = (e: KonvaEventObject<MouseEvent>) => {
@@ -85,12 +85,14 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
           onMouseEnter={() => {
             setHoveredPin(pin.id);
             document.body.style.cursor = 'crosshair';
+            handlePinMouseEnter({ componentId: component.id, pinId: pin.id });
           }}
           onMouseLeave={() => {
             setHoveredPin(null);
             document.body.style.cursor = 'default';
+            handlePinMouseLeave();
           }}
-          onMouseDown={(e) => handlePinMouseDown(e, pin.id)}
+          onMouseDown={(e) => onPinMouseDown(e, pin.id)}
         >
           <Circle x={0} y={0} radius={8} fill="transparent" />
           <Rect

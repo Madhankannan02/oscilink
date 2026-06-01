@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 import { Group, Rect, Text, Circle, Label, Tag, Path, Line } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
 import Konva from 'konva';
 import { CircuitComponent } from '../../../types/components';
 import { useWorkspaceStore } from '../../../store/workspaceStore';
 import { useSimulationStore } from '../../../store/simulationStore';
+import { CanvasContext } from '../../canvas/Canvas';
 
 interface ArduinoUnoProps {
   component: CircuitComponent;
@@ -14,6 +15,8 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
   const [hoveredPin, setHoveredPin] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const outerGroupRef = useRef<Konva.Group>(null);
+
+  const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = useContext(CanvasContext);
 
   const selectedComponentIds = useWorkspaceStore(state => state.selectedComponentIds);
   const isSelected = selectedComponentIds.includes(component.id);
@@ -36,16 +39,15 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
     useWorkspaceStore.getState().selectComponent(component.id, e.evt.shiftKey);
   };
 
-  const handlePinMouseDown = (e: KonvaEventObject<MouseEvent>, pinId: string) => {
+  const onPinMouseDown = (e: KonvaEventObject<MouseEvent>, pinId: string) => {
     e.cancelBubble = true;
     const pin = component.pins[pinId];
     if (pin && pin.type !== 'power' && pin.type !== 'ground' && pin.connectedWireIds.length >= 1) {
-      return;
+      // Prevent multiple connections on data pins, unless it's the target pin during draw
+      const state = useWorkspaceStore.getState();
+      if (!state.isDrawingWire) return;
     }
-    useWorkspaceStore.getState().startWireDrawing({
-      componentId: component.id,
-      pinId: pinId
-    });
+    handlePinMouseDown({ componentId: component.id, pinId });
   };
 
   const getPinVoltage = (pinId: string) => {
@@ -119,7 +121,13 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
     const pinId = getPinAtPointer(e);
     if (pinId !== hoveredPin) {
       setHoveredPin(pinId);
-      document.body.style.cursor = pinId ? 'crosshair' : 'default';
+      if (pinId) {
+        document.body.style.cursor = 'crosshair';
+        handlePinMouseEnter({ componentId: component.id, pinId });
+      } else {
+        document.body.style.cursor = 'default';
+        handlePinMouseLeave();
+      }
     }
   };
 
@@ -127,11 +135,12 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
     e.cancelBubble = true;
     setHoveredPin(null);
     document.body.style.cursor = 'default';
+    handlePinMouseLeave();
   };
 
   const handleOverlayMouseDown = (e: KonvaEventObject<MouseEvent>) => {
     const pinId = getPinAtPointer(e);
-    if (pinId) handlePinMouseDown(e, pinId);
+    if (pinId) onPinMouseDown(e, pinId);
   };
 
   const w = 4.6;
@@ -151,6 +160,7 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
       onMouseLeave={() => {
         setHoveredPin(null);
         document.body.style.cursor = 'default';
+        handlePinMouseLeave();
       }}
     >
       {/* Selection Box */}

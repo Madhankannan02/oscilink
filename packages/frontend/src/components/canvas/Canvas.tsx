@@ -5,9 +5,20 @@ import { Grid } from './Grid';
 import { Plus, Minus, Maximize } from 'lucide-react';
 import Konva from 'konva';
 import { ArduinoUno } from '../circuit-components/arduino/ArduinoUno';
+import { useWireDrawing } from '../../hooks/useWireDrawing';
+import { WireLayer } from './WireLayer';
+import { PinRef } from '../../types/components';
 
-export const CanvasContext = createContext<{ stopPropagation: (e: any) => void }>({
+export const CanvasContext = createContext<{ 
+  stopPropagation: (e: any) => void;
+  handlePinMouseDown: (pinRef: PinRef) => void;
+  handlePinMouseEnter: (pinRef: PinRef) => void;
+  handlePinMouseLeave: () => void;
+}>({
   stopPropagation: (e) => e.cancelBubble = true,
+  handlePinMouseDown: () => {},
+  handlePinMouseEnter: () => {},
+  handlePinMouseLeave: () => {},
 });
 
 export const Canvas: React.FC = () => {
@@ -23,7 +34,17 @@ export const Canvas: React.FC = () => {
   const clearSelection = useWorkspaceStore((state) => state.clearSelection);
   const components = useWorkspaceStore((state) => state.components);
 
-  // Measure canvas container dimensions using ResizeObserver
+  const {
+    previewWirePoints,
+    hoveredPin,
+    handlePinMouseDown,
+    handlePinMouseEnter,
+    handlePinMouseLeave,
+    handleCanvasMouseMove: handleWireMouseMove,
+    handleStageClick: handleWireStageClick,
+    isDrawingWire
+  } = useWireDrawing();
+
   useEffect(() => {
     if (!containerRef.current) return;
     
@@ -40,7 +61,6 @@ export const Canvas: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Track spacebar for panning
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space' && !e.repeat) {
@@ -62,7 +82,6 @@ export const Canvas: React.FC = () => {
     };
   }, []);
 
-  // Zoom Behavior
   const handleWheel = useCallback((e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
     
@@ -74,28 +93,23 @@ export const Canvas: React.FC = () => {
     if (!pointer) return;
     
     const scaleBy = 1.1;
-    // zoom in on scroll up (deltaY < 0), zoom out on scroll down (deltaY > 0)
     const direction = e.evt.deltaY > 0 ? -1 : 1;
     
     let newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
     newScale = Math.max(0.1, Math.min(newScale, 5.0));
     
-    // Find point under mouse in world coords before scale
     const mousePointTo = {
       x: (pointer.x - viewport.x) / oldScale,
       y: (pointer.y - viewport.y) / oldScale,
     };
     
-    // Calculate new x and y to keep the point under the mouse
     const newX = pointer.x - mousePointTo.x * newScale;
     const newY = pointer.y - mousePointTo.y * newScale;
     
     setViewport({ scale: newScale, x: newX, y: newY });
   }, [viewport, setViewport]);
 
-  // Pan Behavior
   const handleMouseDown = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
-    // Middle click (button 1) or Space + Left click (button 0)
     if (e.evt.button === 1 || (e.evt.button === 0 && isSpacePressed)) {
       setIsPanning(true);
       e.cancelBubble = true;
@@ -103,6 +117,18 @@ export const Canvas: React.FC = () => {
   }, [isSpacePressed]);
 
   const handleMouseMove = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
+    const stage = e.target.getStage();
+    if (stage) {
+      const pointer = stage.getPointerPosition();
+      if (pointer) {
+        const worldPoint = {
+          x: (pointer.x - viewport.x) / viewport.scale,
+          y: (pointer.y - viewport.y) / viewport.scale
+        };
+        handleWireMouseMove(worldPoint);
+      }
+    }
+
     if (!isPanning) return;
     
     setViewport({
@@ -110,7 +136,7 @@ export const Canvas: React.FC = () => {
       x: viewport.x + e.evt.movementX,
       y: viewport.y + e.evt.movementY
     });
-  }, [isPanning, viewport, setViewport]);
+  }, [isPanning, viewport, setViewport, handleWireMouseMove]);
 
   const handleMouseUp = useCallback(() => {
     if (isPanning) {
@@ -118,15 +144,13 @@ export const Canvas: React.FC = () => {
     }
   }, [isPanning]);
 
-  // Click on empty canvas
   const handleStageClick = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
-    // Only clear selection if we clicked directly on the stage (empty area)
     if (e.target === stageRef.current) {
       clearSelection();
+      handleWireStageClick(e);
     }
-  }, [clearSelection]);
+  }, [clearSelection, handleWireStageClick]);
 
-  // UI Zoom Controls
   const handleZoomIn = () => {
     setViewport({ ...viewport, scale: Math.min(5.0, viewport.scale * 1.1) });
   };
@@ -154,7 +178,6 @@ export const Canvas: React.FC = () => {
     });
 
     const padding = 100;
-    // Rough estimate for max component size
     const compWidth = 200;
     const compHeight = 200;
     
@@ -166,7 +189,6 @@ export const Canvas: React.FC = () => {
     let newScale = Math.min(scaleX, scaleY);
     newScale = Math.max(0.1, Math.min(newScale, 5.0));
 
-    // Calculate center based on max and min plus half component size
     const centerX = minX + (maxX - minX) / 2 + compWidth / 2;
     const centerY = minY + (maxY - minY) / 2 + compHeight / 2;
 
@@ -209,11 +231,17 @@ export const Canvas: React.FC = () => {
             >
               {/* Layer 2: Wire layer */}
               <Group name="layer2-wires">
+                <WireLayer previewWirePoints={previewWirePoints} hoveredPin={hoveredPin} />
               </Group>
               
               {/* Layer 3: Component layer */}
               <Group name="layer3-components">
-                <CanvasContext.Provider value={{ stopPropagation: (e) => { e.cancelBubble = true; } }}>
+                <CanvasContext.Provider value={{ 
+                  stopPropagation: (e) => { e.cancelBubble = true; },
+                  handlePinMouseDown,
+                  handlePinMouseEnter,
+                  handlePinMouseLeave
+                }}>
                   {components.map(comp => {
                     switch (comp.type) {
                       case 'ARDUINO_UNO':

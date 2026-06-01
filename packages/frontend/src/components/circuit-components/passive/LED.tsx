@@ -4,6 +4,7 @@ import { KonvaEventObject } from 'konva/lib/Node';
 import { CircuitComponent } from '../../../types/components';
 import { useWorkspaceStore } from '../../../store/workspaceStore';
 import { useSimulationStore } from '../../../store/simulationStore';
+import { CanvasContext } from '../../../canvas/Canvas';
 
 interface LEDProps {
   component: CircuitComponent;
@@ -15,6 +16,8 @@ export const LED: React.FC<LEDProps> = ({ component }) => {
   const outerGroupRef = useRef<any>(null);
   const [displayedBrightness, setDisplayedBrightness] = useState(0);
   const animFrameRef = useRef<number>();
+
+  const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = React.useContext(CanvasContext);
 
   const selectedComponentIds = useWorkspaceStore((state) => state.selectedComponentIds);
   const isSelected = selectedComponentIds.includes(component.id);
@@ -70,12 +73,9 @@ export const LED: React.FC<LEDProps> = ({ component }) => {
     useWorkspaceStore.getState().selectComponent(component.id, e.evt.shiftKey);
   };
 
-  const handlePinMouseDown = (e: KonvaEventObject<MouseEvent>, pinId: string) => {
+  const onPinMouseDown = (e: KonvaEventObject<MouseEvent>, pinId: string) => {
     e.cancelBubble = true;
-    useWorkspaceStore.getState().startWireDrawing({
-      componentId: component.id,
-      pinId: pinId
-    });
+    handlePinMouseDown({ componentId: component.id, pinId });
   };
 
   const baseColor = component.properties?.color || 'RED';
@@ -106,12 +106,14 @@ export const LED: React.FC<LEDProps> = ({ component }) => {
           onMouseEnter={() => {
             setHoveredPin(pin.id);
             document.body.style.cursor = 'crosshair';
+            handlePinMouseEnter({ componentId: component.id, pinId: pin.id });
           }}
           onMouseLeave={() => {
             setHoveredPin(null);
             document.body.style.cursor = 'default';
+            handlePinMouseLeave();
           }}
-          onMouseDown={(e) => handlePinMouseDown(e, pin.id)}
+          onMouseDown={(e) => onPinMouseDown(e, pin.id)}
         >
           <Circle x={0} y={0} radius={8} fill="transparent" />
           
