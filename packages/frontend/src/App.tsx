@@ -1,5 +1,6 @@
 import { Canvas } from './components/canvas/Canvas';
 import { ComponentPalette } from './components/ui/ComponentPalette';
+import { WireColorPicker } from './components/ui/WireColorPicker';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
         {/* Center Panel (Canvas/Editor) */}
         <main className="flex-1 bg-[#181818] relative flex flex-col">
           <Canvas />
+          <WireColorPicker />
         </main>
 
         {/* Right Panel (Properties/Inspector) */}

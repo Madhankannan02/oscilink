@@ -6,10 +6,9 @@ import { PinRef } from '../../types/components';
 
 interface WireLayerProps {
   previewWirePoints: number[] | null;
-  hoveredPin: PinRef | null;
 }
 
-export const WireLayer: React.FC<WireLayerProps> = ({ previewWirePoints, hoveredPin }) => {
+export const WireLayer: React.FC<WireLayerProps> = ({ previewWirePoints }) => {
   const wires = useWorkspaceStore(state => state.wires);
   const selectedWireIds = useWorkspaceStore(state => state.selectedWireIds);
   const selectWire = useWorkspaceStore(state => state.selectWire);
@@ -55,14 +54,14 @@ export const WireLayer: React.FC<WireLayerProps> = ({ previewWirePoints, hovered
     blue: '#3b82f6',
     yellow: '#eab308',
     green: '#22c55e',
+    orange: '#f97316',
+    white: '#f8fafc',
     error: '#dc2626'
   };
 
   const normalWires = wires.filter(w => !selectedWireIds.includes(w.id) && !w.isError);
-  const selectedWires = wires.filter(w => selectedWireIds.includes(w.id));
-  const errorWires = wires.filter(w => w.isError && !selectedWireIds.includes(w.id));
 
-  const drawNormalWires = (context: Konva.Context, shape: Konva.Shape) => {
+  const drawNormalWires = (context: Konva.Context) => {
     const colorGroups: Record<string, typeof normalWires> = {};
     normalWires.forEach(w => {
       const c = w.color || 'blue';
@@ -125,7 +124,7 @@ export const WireLayer: React.FC<WireLayerProps> = ({ previewWirePoints, hovered
             dash={[10, 5]}
             sceneFunc={(ctx, shape) => {
               shape.dashOffset(dashOffsetRef.current);
-              shape._sceneFunc(ctx);
+              (shape as any)._sceneFunc(ctx);
             }}
             listening={false}
           />
@@ -223,7 +222,7 @@ export const WireLayer: React.FC<WireLayerProps> = ({ previewWirePoints, hovered
           lineJoin="round"
           sceneFunc={(ctx, shape) => {
             shape.dashOffset(dashOffsetRef.current);
-            shape._sceneFunc(ctx);
+            (shape as any)._sceneFunc(ctx);
           }}
           listening={false}
         />

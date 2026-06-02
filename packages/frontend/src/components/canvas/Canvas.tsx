@@ -228,13 +228,13 @@ export const Canvas: React.FC = () => {
             handlePinMouseEnter,
             handlePinMouseLeave
           }}>
-            {/* Layer 2: Wire layer */}
-            <Layer x={viewport.x} y={viewport.y} scaleX={viewport.scale} scaleY={viewport.scale}>
-              <WireLayer previewWirePoints={previewWirePoints} hoveredPin={hoveredPin} />
-            </Layer>
-            
-            {/* Layer 3: Component layer */}
+            {/* Layer 2: Component layer */}
             <ComponentLayer />
+
+            {/* Layer 3: Wire layer */}
+            <Layer x={viewport.x} y={viewport.y} scaleX={viewport.scale} scaleY={viewport.scale}>
+              <WireLayer previewWirePoints={previewWirePoints} />
+            </Layer>
             
             {/* Layer 4: Interaction layer */}
             <InteractionLayer />

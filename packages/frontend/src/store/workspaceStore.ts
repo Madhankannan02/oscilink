@@ -39,6 +39,7 @@ interface WorkspaceActions {
   updateComponentRotation: (id: string, rotation: number) => void;
   addWire: (wire: Wire) => void;
   removeWire: (id: string) => void;
+  updateWireColor: (id: string, color: WireColor) => void;
   selectComponent: (id: string, multiSelect: boolean) => void;
   selectWire: (id: string, multiSelect: boolean) => void;
   clearSelection: () => void;
@@ -176,6 +177,16 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
             }
           }
           state.wires = state.wires.filter(w => w.id !== id);
+        });
+        get().pushHistory();
+      },
+
+      updateWireColor: (id, color) => {
+        set((state) => {
+          const wire = state.wires.find(w => w.id === id);
+          if (wire) {
+            wire.color = color;
+          }
         });
         get().pushHistory();
       },
