@@ -144,7 +144,7 @@ export const WireLayer: React.FC<WireLayerProps> = ({ previewWirePoints }) => {
         <Line
           points={wire.points}
           stroke="transparent"
-          strokeWidth={15}
+          strokeWidth={6}
           lineJoin="round"
           lineCap="round"
           onMouseEnter={() => {
