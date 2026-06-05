@@ -22,7 +22,7 @@ export const CanvasContext = createContext<{
   handlePinMouseLeave: () => {},
 });
 
-export const Canvas: React.FC = () => {
+export const Canvas: React.FC<{ rightPanelOpen?: boolean }> = ({ rightPanelOpen = false }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   
@@ -43,7 +43,6 @@ export const Canvas: React.FC = () => {
 
   const {
     previewWirePoints,
-    hoveredPin,
     handlePinMouseDown,
     handlePinMouseEnter,
     handlePinMouseLeave,
@@ -54,12 +53,25 @@ export const Canvas: React.FC = () => {
   useEffect(() => {
     if (!containerRef.current) return;
     
+    let lastLeft = containerRef.current.getBoundingClientRect().left;
+    
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         setDimensions({
           width: entry.contentRect.width,
           height: entry.contentRect.height
         });
+        
+        const newLeft = entry.target.getBoundingClientRect().left;
+        if (newLeft !== lastLeft) {
+          const deltaLeft = newLeft - lastLeft;
+          const currentViewport = useWorkspaceStore.getState().viewport;
+          useWorkspaceStore.getState().setViewport({
+            ...currentViewport,
+            x: currentViewport.x - deltaLeft
+          });
+          lastLeft = newLeft;
+        }
       }
     });
     
@@ -262,7 +274,10 @@ export const Canvas: React.FC = () => {
       )}
 
       {/* Zoom Indicator UI Overlay */}
-      <div className="absolute bottom-4 right-4 flex items-center bg-surface border border-border rounded-full shadow-lg overflow-hidden text-text select-none z-10 h-10">
+      <div 
+        className="absolute bottom-4 flex items-center bg-surface border border-border rounded-full shadow-lg overflow-hidden text-text select-none z-10 h-10 transition-all duration-300 ease-in-out"
+        style={{ right: rightPanelOpen ? '466px' : '16px' }}
+      >
         <button 
           onClick={undo}
           disabled={!canUndo}
