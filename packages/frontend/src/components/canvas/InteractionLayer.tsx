@@ -23,6 +23,24 @@ export const getComponentBounds = (comp: CircuitComponent) => {
     case 'PUSH_BUTTON':
       width = 50; height = 50; offsetX = -5; offsetY = -5;
       break;
+    case 'POTENTIOMETER':
+    case 'SERVO_MOTOR':
+      width = 60; height = 60; offsetX = -5; offsetY = -5;
+      break;
+    case 'BUZZER':
+    case 'TEMPERATURE_SENSOR':
+      width = 50; height = 50; offsetX = -5; offsetY = -5;
+      break;
+    case 'LCD_16X2':
+      width = 140; height = 40; offsetX = -5; offsetY = -5;
+      break;
+    case 'ULTRASONIC_SENSOR':
+    case 'RELAY':
+      width = 70; height = 50; offsetX = -5; offsetY = -5;
+      break;
+    case 'BREADBOARD':
+      width = 300; height = 100; offsetX = -5; offsetY = -5;
+      break;
   }
   
   return {

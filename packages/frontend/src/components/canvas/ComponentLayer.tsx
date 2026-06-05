@@ -23,16 +23,28 @@ const ComponentRouter = ({ component }: { component: CircuitComponent }) => {
     case 'LED': return <LED component={component} />;
     case 'RESISTOR': return <Resistor component={component} />;
     case 'PUSH_BUTTON': return <PushButton component={component} />;
-    // POTENTIOMETER, SERVO_MOTOR, BUZZER, LCD_16X2, ULTRASONIC_SENSOR, TEMPERATURE_SENSOR, RELAY, BREADBOARD
+    // Render fallback for un-implemented types
+    case 'POTENTIOMETER':
+    case 'SERVO_MOTOR':
+    case 'BUZZER':
+    case 'LCD_16X2':
+    case 'ULTRASONIC_SENSOR':
+    case 'TEMPERATURE_SENSOR':
+    case 'RELAY':
+    case 'BREADBOARD':
     default: return <FallbackComponent component={component} />;
   }
 };
 
 const MemoizedComponent = React.memo(
   ({ component }: { component: CircuitComponent }) => {
+    // Select only this specific component's simulation state to prevent unnecessary re-renders
+    const simState = useSimulationStore(state => state.componentStates[component.id]);
+    
     return <ComponentRouter component={component} />;
   },
   (prev, next) => {
+    // Re-render when position, rotation, or properties change
     return (
       prev.component.position.x === next.component.position.x &&
       prev.component.position.y === next.component.position.y &&
@@ -47,6 +59,7 @@ export const ComponentLayer: React.FC = () => {
   const viewport = useWorkspaceStore(state => state.viewport);
   const layerRef = useRef<Konva.Layer>(null);
 
+  // Call layer.batchDraw() when component states change from simulation
   useEffect(() => {
     const unsubscribe = useSimulationStore.subscribe(
       (state, oldState) => {
