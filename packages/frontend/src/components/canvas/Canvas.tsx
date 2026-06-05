@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback, createContext } from '
 import { Stage, Layer } from 'react-konva';
 import { useWorkspaceStore } from '../../store/workspaceStore';
 import { Grid } from './Grid';
-import { Plus, Minus, Maximize } from 'lucide-react';
+import { Plus, Minus, Maximize, RotateCw, Undo2, Redo2 } from 'lucide-react';
 import Konva from 'konva';
 import { useWireDrawing } from '../../hooks/useWireDrawing';
 import { WireLayer } from './WireLayer';
@@ -34,6 +34,12 @@ export const Canvas: React.FC = () => {
   const setViewport = useWorkspaceStore((state) => state.setViewport);
   const clearSelection = useWorkspaceStore((state) => state.clearSelection);
   const components = useWorkspaceStore((state) => state.components);
+  const selectedComponentIds = useWorkspaceStore((state) => state.selectedComponentIds);
+  const updateComponentRotation = useWorkspaceStore((state) => state.updateComponentRotation);
+  const undo = useWorkspaceStore((state) => state.undo);
+  const redo = useWorkspaceStore((state) => state.redo);
+  const history = useWorkspaceStore((state) => state.history);
+  const historyIndex = useWorkspaceStore((state) => state.historyIndex);
 
   const {
     previewWirePoints,
@@ -198,8 +204,21 @@ export const Canvas: React.FC = () => {
     setViewport({ scale: newScale, x: newX, y: newY });
   };
 
+  const handleRotate = () => {
+    selectedComponentIds.forEach(id => {
+      const comp = components.find(c => c.id === id);
+      if (comp) {
+        updateComponentRotation(id, (comp.rotation + 90) % 360);
+      }
+    });
+  };
+
   const cursorStyle = isPanning ? 'grabbing' : (isSpacePressed ? 'grab' : 'default');
   const zoomPercent = Math.round(viewport.scale * 100);
+  
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
+  const hasSelection = selectedComponentIds.length > 0;
 
   return (
     <div 
@@ -243,17 +262,41 @@ export const Canvas: React.FC = () => {
       )}
 
       {/* Zoom Indicator UI Overlay */}
-      <div className="absolute bottom-4 right-4 flex items-center bg-surface border border-border rounded-full shadow-lg overflow-hidden text-text select-none z-10">
+      <div className="absolute bottom-4 right-4 flex items-center bg-surface border border-border rounded-full shadow-lg overflow-hidden text-text select-none z-10 h-10">
+        <button 
+          onClick={undo}
+          disabled={!canUndo}
+          className={`px-3 hover:bg-surface-hover h-full transition-colors flex items-center justify-center border-r border-border ${!canUndo ? 'opacity-40 cursor-not-allowed' : ''}`}
+          title="Undo (Ctrl+Z)"
+        >
+          <Undo2 size={16} />
+        </button>
+        <button 
+          onClick={redo}
+          disabled={!canRedo}
+          className={`px-3 hover:bg-surface-hover h-full transition-colors flex items-center justify-center border-r border-border ${!canRedo ? 'opacity-40 cursor-not-allowed' : ''}`}
+          title="Redo (Ctrl+Y)"
+        >
+          <Redo2 size={16} />
+        </button>
+        <button 
+          onClick={handleRotate}
+          disabled={!hasSelection}
+          className={`px-3 hover:bg-surface-hover h-full transition-colors flex items-center justify-center border-r border-border ${!hasSelection ? 'opacity-40 cursor-not-allowed' : ''}`}
+          title="Rotate (R)"
+        >
+          <RotateCw size={16} />
+        </button>
         <button 
           onClick={handleFit}
-          className="p-2 hover:bg-surface-hover transition-colors flex items-center justify-center border-r border-border"
-          title="Fit to Screen"
+          className="px-3 hover:bg-surface-hover h-full transition-colors flex items-center justify-center border-r border-border"
+          title="Fit to Screen (F)"
         >
           <Maximize size={16} />
         </button>
         <button 
           onClick={handleZoomOut}
-          className="p-2 hover:bg-surface-hover transition-colors flex items-center justify-center"
+          className="px-3 hover:bg-surface-hover h-full transition-colors flex items-center justify-center"
           title="Zoom Out"
         >
           <Minus size={16} />
@@ -267,7 +310,7 @@ export const Canvas: React.FC = () => {
         </button>
         <button 
           onClick={handleZoomIn}
-          className="p-2 hover:bg-surface-hover transition-colors flex items-center justify-center"
+          className="px-3 hover:bg-surface-hover h-full transition-colors flex items-center justify-center"
           title="Zoom In"
         >
           <Plus size={16} />

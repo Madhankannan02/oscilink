@@ -114,6 +114,13 @@ export const useWireDrawing = () => {
     }
   }, [isDrawingWire, wireDrawingFrom, components, hoveredPin, intermediatePoints]);
 
+  useEffect(() => {
+    if (!isDrawingWire) {
+      setPreviewWirePoints(null);
+      setIntermediatePoints([]);
+    }
+  }, [isDrawingWire]);
+
   const handleCanvasKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape' && isDrawingWire) {
       cancelWireDrawing();

@@ -1,15 +1,21 @@
 import { Canvas } from './components/canvas/Canvas';
 import { ComponentPalette } from './components/ui/ComponentPalette';
 import { WireColorPicker } from './components/ui/WireColorPicker';
+import { UndoRedoButtons } from './components/ui/UndoRedoButtons';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
+  useKeyboardShortcuts();
+
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-background">
       <Toaster position="bottom-right" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
       {/* Top Toolbar */}
-      <header className="h-[52px] min-h-[52px] bg-surface border-b border-border flex items-center px-4">
+      <header className="h-[52px] min-h-[52px] bg-surface border-b border-border flex items-center px-4 gap-4">
         <h1 className="text-lg font-semibold text-primary">Arduino Simulator</h1>
+        <div className="h-6 w-px bg-border mx-2" />
+        <UndoRedoButtons />
       </header>
 
       {/* Main Content Area */}

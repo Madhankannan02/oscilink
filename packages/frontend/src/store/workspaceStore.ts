@@ -29,6 +29,7 @@ interface WorkspaceState {
   mousePosition: Point;
   history: WorkspaceSnapshot[];
   historyIndex: number;
+  panMode: boolean;
 }
 
 interface WorkspaceActions {
@@ -54,6 +55,7 @@ interface WorkspaceActions {
   redo: () => void;
   loadProject: (components: CircuitComponent[], wires: Wire[], viewport: { scale: number; x: number; y: number }) => void;
   buildCircuitGraph: () => SerializedCircuitGraph;
+  setPanMode: (mode: boolean) => void;
 }
 
 type WorkspaceStore = WorkspaceState & WorkspaceActions;
@@ -75,8 +77,9 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       isDrawingWire: false,
       wireDrawingFrom: null,
       mousePosition: { x: 0, y: 0 },
-      history: [],
-      historyIndex: -1,
+      history: [{ components: [], wires: [] }],
+      historyIndex: 0,
+      panMode: false,
 
       pushHistory: () => {
         set((state) => {
@@ -347,7 +350,11 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
         });
 
         return { nodes, edges };
-      }
+      },
+
+      setPanMode: (mode) => set((state) => {
+        state.panMode = mode;
+      })
     })),
     { name: 'workspace-store', enabled: (import.meta as any).env ? (import.meta as any).env.DEV : true }
   )
