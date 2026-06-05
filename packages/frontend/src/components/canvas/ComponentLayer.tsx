@@ -39,7 +39,7 @@ const ComponentRouter = ({ component }: { component: CircuitComponent }) => {
 const MemoizedComponent = React.memo(
   ({ component }: { component: CircuitComponent }) => {
     // Select only this specific component's simulation state to prevent unnecessary re-renders
-    const simState = useSimulationStore(state => state.componentStates[component.id]);
+    useSimulationStore(state => state.componentStates[component.id]);
     
     return <ComponentRouter component={component} />;
   },

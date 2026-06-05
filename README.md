@@ -1,4 +1,4 @@
-# Arduino Simulator
+# Oscilink
 
 A full-stack monorepo for a browser-based Arduino electronics simulator. This project aims to provide a robust, interactive environment for designing circuits and writing code for Arduino microcontrollers directly in the browser.
 
