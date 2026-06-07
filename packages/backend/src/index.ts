@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
+import compileRoute from './routes/compile';
 
 dotenv.config();
 
@@ -28,6 +29,9 @@ app.use(limiter);
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
+
+// API Routes
+app.use('/api', compileRoute);
 
 const server = createServer(app);
 
