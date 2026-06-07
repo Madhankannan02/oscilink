@@ -3,44 +3,27 @@ import { ComponentPalette } from './components/ui/ComponentPalette';
 import { WireColorPicker } from './components/ui/WireColorPicker';
 import { UndoRedoButtons } from './components/ui/UndoRedoButtons';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { CodeEditor } from './components/editor/CodeEditor';
+import { CodeEditor, CodeEditorRef } from './components/editor/CodeEditor';
 import { SerialMonitor } from './components/editor/SerialMonitor';
 import { Toaster } from 'react-hot-toast';
-import { useState } from 'react';
-import { PanelLeft, PanelRight } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Toolbar } from './components/ui/Toolbar';
 
 function App() {
   useKeyboardShortcuts();
 
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
+  const editorRef = useRef<CodeEditorRef>(null);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-background">
       <Toaster position="bottom-right" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
-      {/* Top Toolbar */}
-      <header className="h-[52px] min-h-[52px] bg-surface border-b border-border flex items-center px-4 gap-4">
-        <h1 className="text-lg font-semibold text-primary">Oscilink</h1>
-        <div className="h-6 w-px bg-border mx-2" />
-        <UndoRedoButtons />
-        
-        <div className="flex items-center ml-auto gap-2 text-text-secondary">
-          <button 
-            onClick={() => setLeftOpen(!leftOpen)} 
-            className={`p-1.5 rounded transition-colors ${leftOpen ? 'bg-surface-hover text-primary' : 'hover:bg-surface-hover'}`}
-            title="Toggle Left Panel"
-          >
-            <PanelLeft size={18} />
-          </button>
-          <button 
-            onClick={() => setRightOpen(!rightOpen)} 
-            className={`p-1.5 rounded transition-colors ${rightOpen ? 'bg-surface-hover text-primary' : 'hover:bg-surface-hover'}`}
-            title="Toggle Right Panel"
-          >
-            <PanelRight size={18} />
-          </button>
-        </div>
-      </header>
+      <Toolbar 
+        leftOpen={leftOpen} setLeftOpen={setLeftOpen} 
+        rightOpen={rightOpen} setRightOpen={setRightOpen} 
+        editorRef={editorRef}
+      />
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-hidden relative">
@@ -63,7 +46,7 @@ function App() {
             <aside className="w-[450px] h-full bg-surface border-l border-border flex flex-col">
               {/* Top Portion: Code Editor */}
               <div className="flex-1 flex flex-col min-h-[300px]">
-                <CodeEditor />
+                <CodeEditor ref={editorRef} />
               </div>
               
               {/* Bottom Portion: Serial Monitor */}
