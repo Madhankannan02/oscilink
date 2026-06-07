@@ -1,10 +1,9 @@
 import { Canvas } from './components/canvas/Canvas';
 import { ComponentPalette } from './components/ui/ComponentPalette';
 import { WireColorPicker } from './components/ui/WireColorPicker';
-import { UndoRedoButtons } from './components/ui/UndoRedoButtons';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { CodeEditor, CodeEditorRef } from './components/editor/CodeEditor';
-import { SerialMonitor } from './components/editor/SerialMonitor';
+import { BottomPanel } from './components/editor/BottomPanel';
 import { Toaster } from 'react-hot-toast';
 import { useState, useRef } from 'react';
 import { Toolbar } from './components/ui/Toolbar';
@@ -49,9 +48,9 @@ function App() {
                 <CodeEditor ref={editorRef} />
               </div>
               
-              {/* Bottom Portion: Serial Monitor */}
+              {/* Bottom Portion: Tabs (Problems & Serial Monitor) */}
               <div className="h-[250px] min-h-[200px] flex flex-col">
-                <SerialMonitor />
+                <BottomPanel />
               </div>
             </aside>
           </div>

@@ -52,11 +52,15 @@ function getHintFromMessage(message: string): string | undefined {
 function parseOutput(stderr: string, tempDir: string): { errors: CompilationError[], warnings: CompilationError[] } {
   const errors: CompilationError[] = [];
   const warnings: CompilationError[] = [];
-  
-  const lines = stderr.split('\n');
+  // Strip ANSI escape codes and Windows carriage returns (\r)
+  const cleanStderr = stderr
+    .replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '')
+    .replace(/\r/g, '');
+  const lines = cleanStderr.split('\n');
   
   // Format: {filepath}:{line}:{column}: {type}: {message}
-  const regex = /^(.*?):(\d+):(\d+):\s*(error|warning|fatal error):\s*(.*)$/i;
+  // Using greedy (.*) for filepath to handle Windows drive letters (e.g., C:\...)
+  const regex = /^(.*):(\d+):(\d+):\s*(error|warning|fatal error):\s*(.*)$/i;
 
   for (const line of lines) {
     const match = line.match(regex);
@@ -111,7 +115,7 @@ export async function compileSketch(code: string): Promise<CompileResult> {
       ? '"C:\\Users\\madha\\bin\\arduino-cli.exe"'
       : 'arduino-cli';
       
-    const command = `${CLI} compile --fqbn arduino:avr:uno --output-dir "${tempDir}" "${tempDir}"`;
+    const command = `${CLI} compile --no-color --fqbn arduino:avr:uno --output-dir "${tempDir}" "${tempDir}"`;
 
     try {
       const { stdout, stderr } = await execAsync(command, { 
