@@ -1,0 +1,291 @@
+import {
+  CPU,
+  AVRIOPort,
+  AVRTimer,
+  AVRUSART,
+  portBConfig,
+  portCConfig,
+  portDConfig,
+  timer0Config,
+  timer1Config,
+  timer2Config,
+  usart0Config
+} from 'avr8js';
+
+class AVRRunner {
+  constructor(flashData) {
+    const program = new Uint16Array(flashData.buffer);
+    this.cpu = new CPU(program);
+    this.timer0 = new AVRTimer(this.cpu, timer0Config);
+    this.timer1 = new AVRTimer(this.cpu, timer1Config);
+    this.timer2 = new AVRTimer(this.cpu, timer2Config);
+    this.portB = new AVRIOPort(this.cpu, portBConfig);
+    this.portC = new AVRIOPort(this.cpu, portCConfig);
+    this.portD = new AVRIOPort(this.cpu, portDConfig);
+    this.usart = new AVRUSART(this.cpu, usart0Config, 16000000);
+  }
+}
+
+let avrRunner = null;
+let circuitGraph = null;
+let simulationLoopTimer = null;
+let isRunning = false;
+let serialBuffer = "";
+let pendingUpdates = {};
+
+let lastHex = null;
+let lastGraphData = null;
+let lastTickTime = 0;
+
+let lastPortB = 0;
+let lastPortC = 0;
+let lastPortD = 0;
+
+function parseIntelHex(hexString) {
+  const flash = new Uint8Array(32768);
+  flash.fill(0xFF);
+  const lines = hexString.split(/\r?\n/);
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    if (line[0] !== ':') {
+      throw new Error(`Malformed hex at line ${i + 1}: Missing ':'`);
+    }
+
+    const byteCount = parseInt(line.substring(1, 3), 16);
+    const address = parseInt(line.substring(3, 7), 16);
+    const recordType = parseInt(line.substring(7, 9), 16);
+
+    let checksum = 0;
+    for (let j = 1; j < line.length - 2; j += 2) {
+      checksum += parseInt(line.substring(j, j + 2), 16);
+    }
+    checksum = (~checksum + 1) & 0xFF;
+    const fileChecksum = parseInt(line.substring(line.length - 2), 16);
+
+    if (checksum !== fileChecksum) {
+      throw new Error(`Checksum mismatch at line ${i + 1}`);
+    }
+
+    if (recordType === 0) {
+      for (let j = 0; j < byteCount; j++) {
+        const dataByte = parseInt(line.substring(9 + j * 2, 11 + j * 2), 16);
+        if (address + j < flash.length) {
+          flash[address + j] = dataByte;
+        }
+      }
+    } else if (recordType === 1) {
+      break;
+    }
+  }
+
+  return flash;
+}
+
+function queueComponentUpdate(componentId, state) {
+  pendingUpdates[componentId] = { ...pendingUpdates[componentId], ...state };
+}
+
+function flushUpdates() {
+  if (Object.keys(pendingUpdates).length > 0) {
+    postMessage({ type: 'BATCH_UPDATE', updates: pendingUpdates });
+    pendingUpdates = {};
+  }
+}
+
+function stopSimulation() {
+  isRunning = false;
+  if (simulationLoopTimer) {
+    clearTimeout(simulationLoopTimer);
+    simulationLoopTimer = null;
+  }
+  avrRunner = null;
+  circuitGraph = null;
+  pendingUpdates = {};
+}
+
+function simulationLoop() {
+  if (!isRunning) return;
+
+  const now = performance.now();
+  const elapsed = now - lastTickTime;
+  lastTickTime = now;
+
+  let cyclesToRun = Math.floor(elapsed * 1600);
+
+  if (cyclesToRun > 5000) {
+    cyclesToRun = 5000;
+  }
+
+  if (avrRunner) {
+    for (let i = 0; i < cyclesToRun; i++) {
+      avrRunner.cpu.tick();
+    }
+  }
+
+  flushUpdates();
+  simulationLoopTimer = setTimeout(simulationLoop, 16);
+}
+
+function handlePinChange(pinName, voltage) {
+  postMessage({ type: 'PIN_CHANGE', payload: { componentId: 'arduino-uno', pinId: pinName, voltage } });
+}
+
+function handlePWMChange(pinName, dutyCycle) {
+  handlePinChange(pinName, dutyCycle * 5.0);
+}
+
+export function setAnalogInputVoltage(channel, voltage) {
+  if (!avrRunner) return;
+  // ADMUX is at 0x7C
+  const admux = avrRunner.cpu.data[0x7C];
+  const selectedChannel = admux & 0x0F;
+  if (selectedChannel === channel) {
+    const counts = Math.round((voltage / 5.0) * 1023);
+    // ADCL is at 0x78, ADCH is at 0x79
+    avrRunner.cpu.data[0x78] = counts & 0xFF;
+    avrRunner.cpu.data[0x79] = (counts >> 8) & 0x03;
+  }
+}
+
+function initializeSimulation(hex, graphData) {
+  try {
+    const flashData = parseIntelHex(hex);
+    
+    avrRunner = new AVRRunner(flashData);
+
+    // TODO: Build circuit graph from topology data
+    // circuitGraph = buildGraph(graphData);
+
+    // PORT LISTENERS
+    avrRunner.portB.addListener((value) => {
+      for (let bit = 0; bit < 6; bit++) {
+        const isHigh = (value & (1 << bit)) !== 0;
+        const wasHigh = (lastPortB & (1 << bit)) !== 0;
+        if (isHigh !== wasHigh) {
+          let pinName = '';
+          if (bit === 0) pinName = 'D8';
+          else if (bit === 1) pinName = 'D9';
+          else if (bit === 2) pinName = 'D10';
+          else if (bit === 3) pinName = 'D11';
+          else if (bit === 4) pinName = 'D12';
+          else if (bit === 5) pinName = 'D13';
+          if (pinName) handlePinChange(pinName, isHigh ? 5.0 : 0.0);
+        }
+      }
+      lastPortB = value;
+    });
+
+    avrRunner.portC.addListener((value) => {
+      for (let bit = 0; bit < 6; bit++) {
+        const isHigh = (value & (1 << bit)) !== 0;
+        const wasHigh = (lastPortC & (1 << bit)) !== 0;
+        if (isHigh !== wasHigh) {
+          let pinName = 'A' + bit;
+          handlePinChange(pinName, isHigh ? 5.0 : 0.0);
+        }
+      }
+      lastPortC = value;
+    });
+
+    avrRunner.portD.addListener((value) => {
+      for (let bit = 0; bit < 8; bit++) {
+        const isHigh = (value & (1 << bit)) !== 0;
+        const wasHigh = (lastPortD & (1 << bit)) !== 0;
+        if (isHigh !== wasHigh) {
+          let pinName = 'D' + bit;
+          handlePinChange(pinName, isHigh ? 5.0 : 0.0);
+        }
+      }
+      lastPortD = value;
+    });
+
+    // SERIAL UART SETUP
+    avrRunner.usart.onByteTransmit = (value) => {
+      serialBuffer += String.fromCharCode(value);
+      if (value === 10 || serialBuffer.length >= 128) {
+        postMessage({ type: 'SERIAL_OUTPUT', payload: { text: serialBuffer } });
+        serialBuffer = '';
+      }
+    };
+
+    // PWM DETECTION
+    // OCR1AL (0x8A), OCR1AH (0x8B) -> D9
+    avrRunner.cpu.writeHooks[0x8A] = (value) => { handlePWMChange('D9', value / 255.0); return false; };
+    // OCR1BL (0x88), OCR1BH (0x89) -> D10
+    avrRunner.cpu.writeHooks[0x88] = (value) => { handlePWMChange('D10', value / 255.0); return false; };
+    // OCR2A (0xB3) -> D11
+    avrRunner.cpu.writeHooks[0xB3] = (value) => { handlePWMChange('D11', value / 255.0); return false; };
+    // OCR2B (0xB4) -> D3
+    avrRunner.cpu.writeHooks[0xB4] = (value) => { handlePWMChange('D3', value / 255.0); return false; };
+
+    lastHex = hex;
+    lastGraphData = graphData;
+
+    postMessage({ type: 'STATUS', value: 'READY' });
+  } catch (error) {
+    postMessage({ type: 'ERROR', error: error.message });
+  }
+}
+
+self.onmessage = function (e) {
+  const { type, payload } = e.data;
+
+  switch (type) {
+    case 'INITIALIZE':
+      initializeSimulation(payload.hex, payload.graphData);
+      break;
+
+    case 'START':
+      if (simulationLoopTimer) clearTimeout(simulationLoopTimer);
+      isRunning = true;
+      lastTickTime = performance.now();
+      simulationLoop();
+      postMessage({ type: 'STATUS', value: 'RUNNING' });
+      break;
+
+    case 'PAUSE':
+      isRunning = false;
+      if (simulationLoopTimer) {
+        clearTimeout(simulationLoopTimer);
+        simulationLoopTimer = null;
+      }
+      postMessage({ type: 'STATUS', value: 'PAUSED' });
+      break;
+
+    case 'STOP':
+      stopSimulation();
+      postMessage({ type: 'STATUS', value: 'IDLE' });
+      break;
+
+    case 'RESET':
+      stopSimulation();
+      if (lastHex && lastGraphData) {
+        initializeSimulation(lastHex, lastGraphData);
+      }
+      break;
+
+    case 'EXTERNAL_INPUT':
+      if (circuitGraph) {
+        // circuitGraph.updateExternalInput(payload.componentId, payload.pinId, payload.value);
+        // circuitGraph.repropagate();
+      }
+      // Handle ADC input
+      if (payload.pinId && payload.pinId.startsWith('A')) {
+        const channel = parseInt(payload.pinId.substring(1), 10);
+        if (!isNaN(channel)) {
+          setAnalogInputVoltage(channel, payload.value);
+        }
+      }
+      break;
+
+    case 'SERIAL_INPUT':
+      if (avrRunner) {
+        for (let i = 0; i < payload.text.length; i++) {
+          avrRunner.usart.writeByte(payload.text.charCodeAt(i));
+        }
+      }
+      break;
+  }
+};

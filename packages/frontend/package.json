@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
+    "avr8js": "^0.21.0",
     "clsx": "^2.1.1",
     "immer": "^11.1.8",
     "konva": "^9.3.6",

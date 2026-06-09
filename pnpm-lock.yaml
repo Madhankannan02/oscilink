@@ -53,6 +53,9 @@ importers:
       '@monaco-editor/react':
         specifier: ^4.6.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      avr8js:
+        specifier: ^0.21.0
+        version: 0.21.0
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -684,6 +687,10 @@ packages:
     hasBin: true
     peerDependencies:
       postcss: ^8.1.0
+
+  avr8js@0.21.0:
+    resolution: {integrity: sha512-kjFzxorERow5YFFV25ElhscG57TJqpT6M0m5GDDbXiMYoBmG6K99MQcq6AU1Ly4L+uB1g1o79dMmBNb5O+toxQ==}
+    engines: {node: '>= 20.19.0', npm: '>= 10.0.0'}
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
@@ -2115,6 +2122,8 @@ snapshots:
       picocolors: 1.1.1
       postcss: 8.5.15
       postcss-value-parser: 4.2.0
+
+  avr8js@0.21.0: {}
 
   balanced-match@1.0.2: {}
 

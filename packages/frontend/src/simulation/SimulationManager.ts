@@ -18,7 +18,7 @@ class SimulationManager {
   }
 
   private initWorker() {
-    this.worker = new Worker('/workers/simulation.worker.js', { type: 'module' });
+    this.worker = new Worker(new URL('./simulation.worker.js', import.meta.url), { type: 'module' });
 
     // ADD THIS LINE:
     (window as any).__simWorker = this.worker;
