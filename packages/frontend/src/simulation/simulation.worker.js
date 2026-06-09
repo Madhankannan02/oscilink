@@ -9,7 +9,8 @@ import {
   timer0Config,
   timer1Config,
   timer2Config,
-  usart0Config
+  usart0Config,
+  avrInstruction
 } from 'avr8js';
 
 class AVRRunner {
@@ -105,6 +106,8 @@ function stopSimulation() {
   pendingUpdates = {};
 }
 
+let totalCycles = 0;
+
 function simulationLoop() {
   if (!isRunning) return;
 
@@ -112,14 +115,15 @@ function simulationLoop() {
   const elapsed = now - lastTickTime;
   lastTickTime = now;
 
-  let cyclesToRun = Math.floor(elapsed * 1600);
+  let cyclesToRun = Math.floor(elapsed * 16000);
 
-  if (cyclesToRun > 5000) {
-    cyclesToRun = 5000;
+  if (cyclesToRun > 500000) {
+    cyclesToRun = 500000;
   }
 
   if (avrRunner) {
     for (let i = 0; i < cyclesToRun; i++) {
+      avrInstruction(avrRunner.cpu);
       avrRunner.cpu.tick();
     }
   }
@@ -154,6 +158,11 @@ function initializeSimulation(hex, graphData) {
     const flashData = parseIntelHex(hex);
     
     avrRunner = new AVRRunner(flashData);
+
+    // Reset previous port states
+    lastPortB = 0;
+    lastPortC = 0;
+    lastPortD = 0;
 
     // TODO: Build circuit graph from topology data
     // circuitGraph = buildGraph(graphData);

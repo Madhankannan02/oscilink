@@ -1,4 +1,5 @@
 import { useSimulationStore } from '../store/simulationStore';
+import { useWorkspaceStore } from '../store/workspaceStore';
 import toast from 'react-hot-toast';
 
 class SimulationManager {
@@ -35,18 +36,20 @@ class SimulationManager {
     };
   }
 
-  private handleMessage(data: any) {
+  private handleMessage(eventData: any) {
     const store = useSimulationStore.getState();
-    const { type, ...payload } = data;
+    const type = eventData.type;
+    // Extract payload carefully regardless of whether it's nested or not
+    const payload = eventData.payload || eventData;
 
     switch (type) {
       case 'BATCH_UPDATE':
-        if (store.batchUpdateComponentStates) {
+        if (store.batchUpdateComponentStates && payload.updates) {
           store.batchUpdateComponentStates(payload.updates);
         }
         break;
       case 'SERIAL_OUTPUT':
-        if (store.addSerialLine) {
+        if (store.addSerialLine && payload.text) {
           store.addSerialLine(payload.text);
         }
         break;
@@ -63,8 +66,15 @@ class SimulationManager {
         toast.error(`Simulation Error: ${payload.error}`);
         break;
       case 'PIN_CHANGE':
+        console.log('PIN_CHANGE received!', payload);
         if (store.setPinVoltage) {
-          store.setPinVoltage(payload.pinId, payload.voltage);
+          let compId = payload.componentId;
+          if (compId === 'arduino-uno') {
+             const arduino = useWorkspaceStore.getState().components.find(c => c.type === 'ARDUINO_UNO');
+             if (arduino) compId = arduino.id;
+          }
+          console.log('Mapping to component ID:', compId);
+          store.setPinVoltage(`${compId}-${payload.pinId}`, payload.voltage);
         }
         break;
     }
