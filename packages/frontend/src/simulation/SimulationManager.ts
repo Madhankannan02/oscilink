@@ -96,6 +96,7 @@ class SimulationManager {
   public stop() {
     this.worker?.postMessage({ type: 'STOP' });
     this.initialized = false;
+    useSimulationStore.getState().resetSimulation();
   }
 
   public reset() {
@@ -109,6 +110,17 @@ class SimulationManager {
   public sendSerialInput(text: string) {
     this.worker?.postMessage({ type: 'SERIAL_INPUT', payload: { text } });
   }
+
+  public destroy() {
+    this.stop();
+    this.worker?.terminate();
+  }
 }
 
 export const simulationManager = SimulationManager.getInstance();
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    simulationManager.destroy();
+  });
+}
