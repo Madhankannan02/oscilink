@@ -83,7 +83,7 @@ export const InteractionLayer: React.FC = () => {
       }
     };
 
-    const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const handleMouseMove = (_e: Konva.KonvaEventObject<MouseEvent>) => {
       if (!selectionStart) return;
       const pos = stage.getPointerPosition();
       if (pos) {

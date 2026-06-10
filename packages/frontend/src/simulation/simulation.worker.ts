@@ -13,6 +13,8 @@ import {
   avrInstruction
 } from 'avr8js';
 
+import { CircuitGraph, calculateLEDState, calculateBuzzerState, calculateServoState } from './engine/CircuitGraph';
+
 class AVRRunner {
   constructor(flashData) {
     const program = new Uint16Array(flashData.buffer);
@@ -84,16 +86,7 @@ function parseIntelHex(hexString) {
   return flash;
 }
 
-function queueComponentUpdate(componentId, state) {
-  pendingUpdates[componentId] = { ...pendingUpdates[componentId], ...state };
-}
 
-function flushUpdates() {
-  if (Object.keys(pendingUpdates).length > 0) {
-    postMessage({ type: 'BATCH_UPDATE', updates: pendingUpdates });
-    pendingUpdates = {};
-  }
-}
 
 function stopSimulation() {
   isRunning = false;
@@ -132,12 +125,73 @@ function simulationLoop() {
   simulationLoopTimer = setTimeout(simulationLoop, 16);
 }
 
+function queueComponentUpdate(componentId, state) {
+  if (!pendingUpdates[componentId]) {
+    pendingUpdates[componentId] = {};
+  }
+  Object.assign(pendingUpdates[componentId], state);
+}
+
+function flushUpdates() {
+  if (Object.keys(pendingUpdates).length > 0) {
+    postMessage({ type: 'BATCH_UPDATE', payload: { updates: pendingUpdates } });
+    pendingUpdates = {};
+  }
+}
+
 function handlePinChange(pinName, voltage) {
+  // Always notify UI for Arduino visual pins
   postMessage({ type: 'PIN_CHANGE', payload: { componentId: 'arduino-uno', pinId: pinName, voltage } });
+
+  if (circuitGraph) {
+    // 1. Find the real Arduino ID in the graph
+    let arduinoId = null;
+    for (const [id, comp] of circuitGraph.components.entries()) {
+      if (comp.type === 'ARDUINO_UNO') { arduinoId = id; break; }
+    }
+    
+    if (arduinoId) {
+      const nodeId = `${arduinoId}.${pinName}`;
+      // 2. Propagate
+      circuitGraph.propagateVoltage(nodeId, voltage);
+      
+      // 3. Update all components that might have changed
+      for (const [id, comp] of circuitGraph.components.entries()) {
+        if (comp.type === 'LED') {
+           const state = calculateLEDState(comp, circuitGraph);
+           queueComponentUpdate(id, state);
+        } else if (comp.type === 'BUZZER') {
+           const state = calculateBuzzerState(comp, circuitGraph);
+           queueComponentUpdate(id, state);
+        } else if (comp.type === 'SERVO') {
+           // We might need to handle servo differently if it relies on PWM history, but for now:
+           // We'll leave Servo out of this loop or handle it if needed.
+        }
+      }
+    }
+  }
 }
 
 function handlePWMChange(pinName, dutyCycle) {
   handlePinChange(pinName, dutyCycle * 5.0);
+  
+  if (circuitGraph) {
+    let arduinoId = null;
+    for (const [id, comp] of circuitGraph.components.entries()) {
+      if (comp.type === 'ARDUINO_UNO') { arduinoId = id; break; }
+    }
+    if (arduinoId) {
+      for (const [id, comp] of circuitGraph.components.entries()) {
+        if (comp.type === 'SERVO') {
+           // Check if this servo is attached to this pin
+           if (circuitGraph.findPath(`${arduinoId}.${pinName}`, `${id}.pwm`)) {
+             const state = calculateServoState(dutyCycle);
+             queueComponentUpdate(id, state);
+           }
+        }
+      }
+    }
+  }
 }
 
 export function setAnalogInputVoltage(channel, voltage) {
@@ -164,8 +218,24 @@ function initializeSimulation(hex, graphData) {
     lastPortC = 0;
     lastPortD = 0;
 
-    // TODO: Build circuit graph from topology data
-    // circuitGraph = buildGraph(graphData);
+    // Build circuit graph from topology data
+    circuitGraph = new CircuitGraph();
+    if (graphData) {
+      circuitGraph.loadSerialized(graphData);
+      
+      // Seed initial ground and power pins for any arduinos
+      for (const [nodeId, node] of circuitGraph.nodes.entries()) {
+        const comp = circuitGraph.components.get(node.componentId);
+        if (comp && comp.type === 'ARDUINO_UNO') {
+          if (node.pinType === 'power') {
+              const v = nodeId.includes('3V3') ? 3.3 : 5.0;
+              circuitGraph.propagateVoltage(nodeId, v);
+          } else if (node.pinType === 'ground') {
+              circuitGraph.propagateVoltage(nodeId, 0.0);
+          }
+        }
+      }
+    }
 
     // PORT LISTENERS
     avrRunner.portB.addListener((value) => {
@@ -234,7 +304,7 @@ function initializeSimulation(hex, graphData) {
 
     postMessage({ type: 'STATUS', value: 'READY' });
   } catch (error) {
-    postMessage({ type: 'ERROR', error: error.message });
+    postMessage({ type: 'ERROR', error: error ? (error.message || String(error)) : 'Unknown error' });
   }
 }
 

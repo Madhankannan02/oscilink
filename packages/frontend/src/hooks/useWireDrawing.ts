@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useWorkspaceStore } from '../store/workspaceStore';
-import { PinRef, Point, CircuitComponent, Pin } from '../types/components';
+import { PinRef, Point } from '../types/components';
 
 export const useWireDrawing = () => {
   const [previewWirePoints, setPreviewWirePoints] = useState<number[] | null>(null);
@@ -135,7 +135,7 @@ export const useWireDrawing = () => {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [handleCanvasKeyDown]);
 
-  const handleStageClick = useCallback((e: any) => {
+  const handleStageClick = useCallback((_e: any) => {
     if (isDrawingWire && !hoveredPin) {
       // User clicked on canvas to create an intermediate point
       const newPoint = currentMousePosRef.current;

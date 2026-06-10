@@ -61,3 +61,9 @@ export const useEditorStore = create<EditorStore>()(
     { name: 'editor-store', enabled: (import.meta as any).env ? (import.meta as any).env.DEV : true }
   )
 );
+
+// --- TEMPORARY DEBUG CODE ---
+if (typeof window !== 'undefined') {
+  (window as any).__editorStore = useEditorStore;
+}
+// -----------------------------

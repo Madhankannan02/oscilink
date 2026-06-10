@@ -9,7 +9,6 @@ export function useCompiler() {
   const setIsCompiling = useEditorStore(state => state.setIsCompiling);
   const setCompiledHex = useEditorStore(state => state.setCompiledHex);
   const setCompilationWarnings = useEditorStore(state => state.setCompilationWarnings);
-  const clearCompilationResults = useEditorStore(state => state.clearCompilationResults);
   const setCompilationErrors = useEditorStore(state => state.setCompilationErrors);
   const setLastCompileTime = useEditorStore(state => state.setLastCompileTime);
   

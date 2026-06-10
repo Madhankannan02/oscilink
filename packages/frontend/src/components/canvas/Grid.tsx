@@ -62,7 +62,7 @@ export const Grid: React.FC<GridProps> = ({ width, height }) => {
         y={viewport.y}
         scaleX={viewport.scale}
         scaleY={viewport.scale}
-        sceneFunc={(context, shape) => {
+        sceneFunc={(context, _shape) => {
           const c = drawnArea.current;
           if (c.startX === 0) return;
 

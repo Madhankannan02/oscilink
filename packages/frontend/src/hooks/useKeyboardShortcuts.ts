@@ -1,9 +1,7 @@
 import { useEffect } from 'react';
 import { useWorkspaceStore } from '../store/workspaceStore';
 import { createComponent } from '../utils/componentFactory';
-import { v4 as uuidv4 } from 'uuid';
-
-export const isEditingText = (e: KeyboardEvent | MouseEvent) => {
+export const isEditingText = (_e: KeyboardEvent | MouseEvent) => {
   const active = document.activeElement as HTMLElement;
   if (!active) return false;
   

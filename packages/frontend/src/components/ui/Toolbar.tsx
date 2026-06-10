@@ -1,10 +1,12 @@
-import { PanelLeft, PanelRight, Play, Loader2, Check } from 'lucide-react';
+import { PanelLeft, PanelRight, Play, Loader2, Check, Square } from 'lucide-react';
 import { UndoRedoButtons } from './UndoRedoButtons';
 import { useCompiler } from '../../hooks/useCompiler';
 import { useSimulation } from '../../hooks/useSimulation';
 import { useEditorStore } from '../../store/editorStore';
 import { useSimulationStore } from '../../store/simulationStore';
+import { useWorkspaceStore } from '../../store/workspaceStore';
 import { CodeEditorRef } from '../editor/CodeEditor';
+import toast from 'react-hot-toast';
 
 interface ToolbarProps {
   leftOpen: boolean;
@@ -19,10 +21,21 @@ export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, editor
   const simulation = useSimulation(); // Call this to ensure worker initializes
   const isCompiling = useEditorStore(state => state.isCompiling);
   const compilationErrors = useEditorStore(state => state.compilationErrors);
+  const compiledHex = useEditorStore(state => state.compiledHex);
   const status = useSimulationStore(state => state.status);
 
   const errorCount = compilationErrors.length;
   const showCheckmark = status === 'COMPILED' && errorCount === 0;
+
+  const handleRun = () => {
+    if (!compiledHex) {
+      toast.error('Please compile the code first');
+      return;
+    }
+    const serializedGraph = useWorkspaceStore.getState().buildCircuitGraph();
+    simulation.initialize(compiledHex, serializedGraph);
+    simulation.start();
+  };
 
   return (
     <header className="h-[52px] min-h-[52px] bg-surface border-b border-border flex items-center px-4 gap-4">
@@ -54,6 +67,26 @@ export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, editor
           </span>
         )}
       </button>
+
+      {/* Run/Stop Buttons */}
+      {status === 'RUNNING' ? (
+        <button
+          onClick={() => simulation.stop()}
+          className="relative flex items-center gap-2 px-4 py-1.5 rounded bg-red-600 hover:bg-red-700 text-white transition-colors"
+        >
+          <Square size={14} fill="currentColor" />
+          <span className="font-medium text-sm">Stop</span>
+        </button>
+      ) : (
+        <button
+          onClick={handleRun}
+          disabled={status !== 'COMPILED' || isCompiling}
+          className="relative flex items-center gap-2 px-4 py-1.5 rounded bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+        >
+          <Play size={16} fill="currentColor" />
+          <span className="font-medium text-sm">Run</span>
+        </button>
+      )}
 
       <div className="flex items-center ml-auto gap-2 text-text-secondary">
         <button 

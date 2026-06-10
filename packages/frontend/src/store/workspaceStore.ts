@@ -12,6 +12,7 @@ import {
   ComponentProperties
 } from '../types/components';
 import { SerializedCircuitGraph, GraphNode, GraphEdge } from '../types/simulation';
+import { CircuitGraph } from '../simulation/engine/CircuitGraph';
 
 interface WorkspaceSnapshot {
   components: CircuitComponent[];
@@ -323,33 +324,29 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
 
       buildCircuitGraph: () => {
         const state = get();
-        const nodes: Record<string, GraphNode> = {};
-        const edges: Record<string, GraphEdge> = {};
+        const graph = new CircuitGraph();
+        
+        const mappedComponents = state.components.map(comp => ({
+          id: comp.id,
+          type: comp.type,
+          properties: comp.properties,
+          pins: Object.values(comp.pins).map(pin => ({
+            id: pin.id,
+            type: pin.type,
+            direction: pin.direction
+          }))
+        }));
 
-        state.components.forEach(comp => {
-          Object.values(comp.pins).forEach(pin => {
-            const nodeId = `${comp.id}_${pin.id}`;
-            nodes[nodeId] = {
-              id: nodeId,
-              componentId: comp.id,
-              pinId: pin.id,
-              voltage: pin.voltage
-            };
-          });
-        });
-
-        state.wires.forEach(wire => {
-          const fromNodeId = `${wire.from.componentId}_${wire.from.pinId}`;
-          const toNodeId = `${wire.to.componentId}_${wire.to.pinId}`;
-          edges[wire.id] = {
-            id: wire.id,
-            fromNodeId,
-            toNodeId,
-            resistance: 0
-          };
-        });
-
-        return { nodes, edges };
+        const mappedWires = state.wires.map(w => ({
+          id: w.id,
+          fromComponentId: w.from.componentId,
+          fromPinId: w.from.pinId,
+          toComponentId: w.to.componentId,
+          toPinId: w.to.pinId
+        }));
+        
+        graph.buildFromCircuitState(mappedComponents as any, mappedWires);
+        return graph.serialize();
       },
 
       setPanMode: (mode) => set((state) => {
@@ -359,3 +356,9 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
     { name: 'workspace-store', enabled: (import.meta as any).env ? (import.meta as any).env.DEV : true }
   )
 );
+
+// --- TEMPORARY DEBUG CODE ---
+if (typeof window !== 'undefined') {
+  (window as any).__workspaceStore = useWorkspaceStore;
+}
+// -----------------------------

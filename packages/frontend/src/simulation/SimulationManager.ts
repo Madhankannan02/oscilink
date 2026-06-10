@@ -19,7 +19,7 @@ class SimulationManager {
   }
 
   private initWorker() {
-    this.worker = new Worker(new URL('./simulation.worker.js', import.meta.url), { type: 'module' });
+    this.worker = new Worker(new URL('./simulation.worker.ts', import.meta.url), { type: 'module' });
 
     // ADD THIS LINE:
     (window as any).__simWorker = this.worker;
@@ -29,10 +29,16 @@ class SimulationManager {
     };
 
     this.worker.onerror = (e: ErrorEvent) => {
+      console.error('FULL WORKER ERROR:', e);
       const store = useSimulationStore.getState();
       if (store.setStatus) store.setStatus('ERROR');
-      if (store.setErrorMessage) store.setErrorMessage(e.message);
-      toast.error(`Worker error: ${e.message}`);
+      
+      let errMsg = 'Unknown Worker Error';
+      if (e.message) errMsg = e.message;
+      else if (e.error && e.error.message) errMsg = e.error.message;
+      
+      if (store.setErrorMessage) store.setErrorMessage(errMsg);
+      toast.error(`Worker crash: ${errMsg}`);
     };
   }
 
@@ -43,6 +49,17 @@ class SimulationManager {
     const payload = eventData.payload || eventData;
 
     switch (type) {
+      case 'PIN_CHANGE':
+        if (store.setPinVoltage) {
+          let compId = payload.componentId;
+          if (compId === 'arduino-uno') {
+            const arduino = useWorkspaceStore.getState().components.find(c => c.type === 'ARDUINO_UNO');
+            if (arduino) compId = arduino.id;
+          }
+          store.setPinVoltage(`${compId}-${payload.pinId}`, payload.voltage);
+        }
+        break;
+
       case 'BATCH_UPDATE':
         if (store.batchUpdateComponentStates && payload.updates) {
           store.batchUpdateComponentStates(payload.updates);
@@ -70,8 +87,8 @@ class SimulationManager {
         if (store.setPinVoltage) {
           let compId = payload.componentId;
           if (compId === 'arduino-uno') {
-             const arduino = useWorkspaceStore.getState().components.find(c => c.type === 'ARDUINO_UNO');
-             if (arduino) compId = arduino.id;
+            const arduino = useWorkspaceStore.getState().components.find(c => c.type === 'ARDUINO_UNO');
+            if (arduino) compId = arduino.id;
           }
           console.log('Mapping to component ID:', compId);
           store.setPinVoltage(`${compId}-${payload.pinId}`, payload.voltage);

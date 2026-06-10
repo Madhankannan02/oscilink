@@ -23,7 +23,6 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
   const pinVoltages = useSimulationStore(state => state.pinVoltages);
 
   const handleDragStart = () => {
-    setIsDragging(true);
     useWorkspaceStore.getState().pushHistory();
   };
 

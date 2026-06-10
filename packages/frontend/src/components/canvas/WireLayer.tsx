@@ -2,7 +2,6 @@ import React, { useRef, useEffect } from 'react';
 import { Group, Shape, Line, Circle } from 'react-konva';
 import Konva from 'konva';
 import { useWorkspaceStore } from '../../store/workspaceStore';
-import { PinRef } from '../../types/components';
 
 interface WireLayerProps {
   previewWirePoints: number[] | null;

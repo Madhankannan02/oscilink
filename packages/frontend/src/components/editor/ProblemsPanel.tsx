@@ -1,6 +1,6 @@
 import { useEditorStore } from '../../store/editorStore';
 import { useSimulationStore } from '../../store/simulationStore';
-import { AlertCircle, AlertTriangle, Info, Terminal } from 'lucide-react';
+import { AlertCircle, AlertTriangle } from 'lucide-react';
 
 export function ProblemsPanel() {
   const compilationErrors = useEditorStore(state => state.compilationErrors);
