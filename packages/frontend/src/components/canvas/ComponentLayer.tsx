@@ -10,6 +10,9 @@ import { LED } from '../circuit-components/passive/LED';
 import { Resistor } from '../circuit-components/passive/Resistor';
 import { PushButton } from '../circuit-components/passive/PushButton';
 
+import { Potentiometer } from '../circuit-components/passive/Potentiometer';
+import { ServoMotor } from '../circuit-components/active/ServoMotor';
+
 const FallbackComponent = ({ component }: { component: CircuitComponent }) => (
   <Group x={component.position.x} y={component.position.y} rotation={component.rotation}>
     <Rect width={100} height={100} fill="#374151" stroke="#4b5563" strokeWidth={2} cornerRadius={8} />
@@ -23,9 +26,9 @@ const ComponentRouter = ({ component }: { component: CircuitComponent }) => {
     case 'LED': return <LED component={component} />;
     case 'RESISTOR': return <Resistor component={component} />;
     case 'PUSH_BUTTON': return <PushButton component={component} />;
+    case 'POTENTIOMETER': return <Potentiometer component={component} />;
+    case 'SERVO_MOTOR': return <ServoMotor component={component} />;
     // Render fallback for un-implemented types
-    case 'POTENTIOMETER':
-    case 'SERVO_MOTOR':
     case 'BUZZER':
     case 'LCD_16X2':
     case 'ULTRASONIC_SENSOR':

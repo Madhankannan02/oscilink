@@ -10,7 +10,9 @@ import {
   timer1Config,
   timer2Config,
   usart0Config,
-  avrInstruction
+  avrInstruction,
+  AVRADC,
+  adcConfig
 } from 'avr8js';
 
 import { CircuitGraph, calculateLEDState, calculateBuzzerState, calculateServoState } from './engine/CircuitGraph';
@@ -24,6 +26,7 @@ class AVRRunner {
   portC: AVRIOPort;
   portD: AVRIOPort;
   usart: AVRUSART;
+  adc: AVRADC;
 
   constructor(flashData: Uint8Array) {
     const program = new Uint16Array(flashData.buffer);
@@ -35,6 +38,7 @@ class AVRRunner {
     this.portC = new AVRIOPort(this.cpu, portCConfig);
     this.portD = new AVRIOPort(this.cpu, portDConfig);
     this.usart = new AVRUSART(this.cpu, usart0Config, 16000000);
+    this.adc = new AVRADC(this.cpu, adcConfig);
   }
 }
 
@@ -44,6 +48,7 @@ let simulationLoopTimer: NodeJS.Timeout | null = null;
 let isRunning = false;
 let serialBuffer = "";
 let pendingUpdates: Record<string, any> = {};
+const pinHighTicks: Record<string, number> = {};
 
 let lastHex: string | null = null;
 let lastGraphData: any = null;
@@ -95,8 +100,6 @@ function parseIntelHex(hexString: string): Uint8Array {
   return flash;
 }
 
-
-
 function stopSimulation() {
   isRunning = false;
   if (simulationLoopTimer) {
@@ -106,6 +109,7 @@ function stopSimulation() {
   avrRunner = null;
   circuitGraph = null;
   pendingUpdates = {};
+  for (const key in pinHighTicks) delete pinHighTicks[key];
 }
 
 
@@ -171,9 +175,29 @@ function handlePinChange(pinName: string, voltage: number) {
         } else if (comp.type === 'BUZZER') {
           const state = calculateBuzzerState(comp, circuitGraph);
           queueComponentUpdate(id, state);
-        } else if (comp.type === 'SERVO') {
-          // We might need to handle servo differently if it relies on PWM history, but for now:
-          // We'll leave Servo out of this loop or handle it if needed.
+        } else if (comp.type === 'SERVO_MOTOR') {
+          // Servos are updated by pulse width measurement, not directly by voltage
+        }
+      }
+
+      // Track pulses for Servos
+      if (avrRunner) {
+        if (voltage > 2.5) {
+          pinHighTicks[pinName] = avrRunner.cpu.cycles;
+        } else if (voltage < 2.5 && pinHighTicks[pinName] !== undefined) {
+          const pulseTicks = avrRunner.cpu.cycles - pinHighTicks[pinName];
+          const pulseWidthUs = pulseTicks / 16;
+          
+          for (const [id, comp] of circuitGraph.components.entries()) {
+            if (comp.type === 'SERVO_MOTOR') {
+              if (circuitGraph.findPath(nodeId, `${id}.SIGNAL`)) {
+                // calculateServoState expects dutyCycle based on 20000us period
+                const pseudoDutyCycle = pulseWidthUs / 20000;
+                const state = calculateServoState(pseudoDutyCycle);
+                queueComponentUpdate(id, state);
+              }
+            }
+          }
         }
       }
     }
@@ -190,9 +214,9 @@ function handlePWMChange(pinName: string, dutyCycle: number) {
     }
     if (arduinoId) {
       for (const [id, comp] of circuitGraph.components.entries()) {
-        if (comp.type === 'SERVO') {
+        if (comp.type === 'SERVO_MOTOR') {
           // Check if this servo is attached to this pin
-          if (circuitGraph.findPath(`${arduinoId}.${pinName}`, `${id}.pwm`)) {
+          if (circuitGraph.findPath(`${arduinoId}.${pinName}`, `${id}.SIGNAL`)) {
             const state = calculateServoState(dutyCycle);
             queueComponentUpdate(id, state);
           }
@@ -203,15 +227,8 @@ function handlePWMChange(pinName: string, dutyCycle: number) {
 }
 
 export function setAnalogInputVoltage(channel: number, voltage: number) {
-  if (!avrRunner) return;
-  // ADMUX is at 0x7C
-  const admux = avrRunner.cpu.data[0x7C];
-  const selectedChannel = admux & 0x0F;
-  if (selectedChannel === channel) {
-    const counts = Math.round((voltage / 5.0) * 1023);
-    // ADCL is at 0x78, ADCH is at 0x79
-    avrRunner.cpu.data[0x78] = counts & 0xFF;
-    avrRunner.cpu.data[0x79] = (counts >> 8) & 0x03;
+  if (avrRunner && avrRunner.adc) {
+    avrRunner.adc.channelValues[channel] = voltage;
   }
 }
 
@@ -299,13 +316,13 @@ function initializeSimulation(hex: string, graphData: any) {
 
     // PWM DETECTION
     // OCR1AL (0x8A), OCR1AH (0x8B) -> D9
-    avrRunner.cpu.writeHooks[0x8A] = (value: number) => { handlePWMChange('D9', value / 255.0); return false; };
+    avrRunner.cpu.writeHooks[0x8A] = (value: number) => { if (avrRunner!.cpu.data[0x80] & 0x80) handlePWMChange('D9', value / 255.0); return false; };
     // OCR1BL (0x88), OCR1BH (0x89) -> D10
-    avrRunner.cpu.writeHooks[0x88] = (value: number) => { handlePWMChange('D10', value / 255.0); return false; };
+    avrRunner.cpu.writeHooks[0x88] = (value: number) => { if (avrRunner!.cpu.data[0x80] & 0x20) handlePWMChange('D10', value / 255.0); return false; };
     // OCR2A (0xB3) -> D11
-    avrRunner.cpu.writeHooks[0xB3] = (value: number) => { handlePWMChange('D11', value / 255.0); return false; };
+    avrRunner.cpu.writeHooks[0xB3] = (value: number) => { if (avrRunner!.cpu.data[0xB0] & 0x80) handlePWMChange('D11', value / 255.0); return false; };
     // OCR2B (0xB4) -> D3
-    avrRunner.cpu.writeHooks[0xB4] = (value: number) => { handlePWMChange('D3', value / 255.0); return false; };
+    avrRunner.cpu.writeHooks[0xB4] = (value: number) => { if (avrRunner!.cpu.data[0xB0] & 0x20) handlePWMChange('D3', value / 255.0); return false; };
 
     lastHex = hex;
     lastGraphData = graphData;
@@ -354,11 +371,25 @@ self.onmessage = function (e) {
       break;
 
     case 'EXTERNAL_INPUT':
-      if (circuitGraph) {
-        // circuitGraph.updateExternalInput(payload.componentId, payload.pinId, payload.value);
-        // circuitGraph.repropagate();
+      if (payload.type === 'potentiometer' && circuitGraph) {
+        const voltage = (payload.value / 1023) * 5.0;
+        queueComponentUpdate(payload.componentId, { value: payload.value, voltage });
+
+        let arduinoId = null;
+        for (const [id, comp] of circuitGraph.components.entries()) {
+          if (comp.type === 'ARDUINO_UNO') { arduinoId = id; break; }
+        }
+        if (arduinoId) {
+          for (let i = 0; i < 6; i++) {
+            if (circuitGraph.findPath(`${payload.componentId}.WIPER`, `${arduinoId}.A${i}`)) {
+              setAnalogInputVoltage(i, voltage);
+              break;
+            }
+          }
+        }
       }
-      // Handle ADC input
+      
+      // Handle legacy raw ADC input if any
       if (payload.pinId && payload.pinId.startsWith('A')) {
         const channel = parseInt(payload.pinId.substring(1), 10);
         if (!isNaN(channel)) {

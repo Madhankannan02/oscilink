@@ -46,8 +46,8 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
   };
 
   const handleButtonDown = (e: KonvaEventObject<MouseEvent>) => {
-    e.cancelBubble = true;
     if (status !== 'RUNNING') return;
+    e.cancelBubble = true;
     
     setIsPressed(true);
     if (capRef.current) {
@@ -110,6 +110,14 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
             fill="#171717"
             shadowColor="transparent"
             shadowBlur={0}
+          />
+          <Text
+            text={pin.label}
+            visible={isHovered}
+            x={pin.id === 'PIN_IN' ? -16 : 4} 
+            y={-10}
+            fontSize={8} fontFamily="sans-serif" fontStyle="bold"
+            fill="#374151" opacity={0.85}
           />
         </Group>
       );

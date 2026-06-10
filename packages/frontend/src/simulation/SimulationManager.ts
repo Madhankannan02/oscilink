@@ -24,6 +24,10 @@ class SimulationManager {
     // ADD THIS LINE:
     (window as any).__simWorker = this.worker;
 
+    window.addEventListener('EXTERNAL_INPUT', ((e: CustomEvent) => {
+      this.worker?.postMessage({ type: 'EXTERNAL_INPUT', payload: e.detail });
+    }) as EventListener);
+
     this.worker.onmessage = (e: MessageEvent) => {
       this.handleMessage(e.data);
     };

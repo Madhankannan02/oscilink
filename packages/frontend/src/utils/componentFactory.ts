@@ -150,10 +150,18 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
       break;
     }
 
+    case 'POTENTIOMETER': {
+      pins['VCC'] = createPin('VCC', 'VCC', 'power', 'input', { x: 4, y: 46 });
+      pins['WIPER'] = createPin('WIPER', 'WIP', 'analog', 'output', { x: 18, y: 46 });
+      pins['GND'] = createPin('GND', 'GND', 'ground', 'input', { x: 32, y: 46 });
+      properties = { resistance: 10000 };
+      break;
+    }
+
     case 'SERVO_MOTOR': {
-      pins['SIGNAL'] = createPin('SIGNAL', 'SIG', 'PWM', 'input', { x: 10, y: 50 });
-      pins['VCC'] = createPin('VCC', 'VCC', 'power', 'input', { x: 25, y: 50 });
-      pins['GND'] = createPin('GND', 'GND', 'ground', 'input', { x: 40, y: 50 });
+      pins['GND'] = createPin('GND', 'GND', 'ground', 'input', { x: 15, y: 40 });
+      pins['VCC'] = createPin('VCC', 'VCC', 'power', 'input', { x: 25, y: 40 });
+      pins['SIGNAL'] = createPin('SIGNAL', 'SIG', 'PWM', 'input', { x: 35, y: 40 });
       properties = { minPulse: 544, maxPulse: 2400 };
       break;
     }
