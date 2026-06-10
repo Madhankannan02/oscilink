@@ -30,6 +30,7 @@ export const Canvas: React.FC<{ rightPanelOpen?: boolean }> = ({ rightPanelOpen 
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
+  const panHasMovedRef = useRef(false);
   
   const viewport = useWorkspaceStore((state) => state.viewport);
   const setViewport = useWorkspaceStore((state) => state.setViewport);
@@ -129,8 +130,10 @@ export const Canvas: React.FC<{ rightPanelOpen?: boolean }> = ({ rightPanelOpen 
   }, [viewport, setViewport]);
 
   const handleMouseDown = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
-    if (e.evt.button === 1 || (e.evt.button === 0 && isSpacePressed)) {
+    const isStageClick = e.target === e.target.getStage();
+    if (e.evt.button === 1 || (e.evt.button === 0 && isSpacePressed) || (e.evt.button === 0 && isStageClick)) {
       setIsPanning(true);
+      panHasMovedRef.current = false;
       e.cancelBubble = true;
     }
   }, [isSpacePressed]);
@@ -150,6 +153,8 @@ export const Canvas: React.FC<{ rightPanelOpen?: boolean }> = ({ rightPanelOpen 
 
     if (!isPanning) return;
     
+    panHasMovedRef.current = true;
+    
     setViewport({
       scale: viewport.scale,
       x: viewport.x + e.evt.movementX,
@@ -164,6 +169,10 @@ export const Canvas: React.FC<{ rightPanelOpen?: boolean }> = ({ rightPanelOpen 
   }, [isPanning]);
 
   const handleStageClick = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (panHasMovedRef.current) {
+      panHasMovedRef.current = false;
+      return;
+    }
     if (e.target === stageRef.current) {
       clearSelection();
       handleWireStageClick(e);
