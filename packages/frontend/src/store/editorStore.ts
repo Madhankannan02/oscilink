@@ -21,6 +21,8 @@ interface EditorState {
   compilationWarnings: CompilationError[];
   isCompiling: boolean;
   lastCompileTime: number | null;
+  lastCompiledCode: string | null;
+  lastCompiledGraph: string | null;
 }
 
 interface EditorActions {
@@ -30,6 +32,8 @@ interface EditorActions {
   setCompilationWarnings: (warnings: CompilationError[]) => void;
   setIsCompiling: (isCompiling: boolean) => void;
   setLastCompileTime: (time: number | null) => void;
+  setLastCompiledCode: (code: string | null) => void;
+  setLastCompiledGraph: (graph: string | null) => void;
   clearCompilationResults: () => void;
 }
 
@@ -44,6 +48,8 @@ export const useEditorStore = create<EditorStore>()(
       compilationWarnings: [],
       isCompiling: false,
       lastCompileTime: null,
+      lastCompiledCode: null,
+      lastCompiledGraph: null,
 
       setCode: (code) => set((state) => { state.code = code; }),
       setCompiledHex: (hex) => set((state) => { state.compiledHex = hex; }),
@@ -51,11 +57,15 @@ export const useEditorStore = create<EditorStore>()(
       setCompilationWarnings: (warnings) => set((state) => { state.compilationWarnings = warnings; }),
       setIsCompiling: (isCompiling) => set((state) => { state.isCompiling = isCompiling; }),
       setLastCompileTime: (time) => set((state) => { state.lastCompileTime = time; }),
+      setLastCompiledCode: (code) => set((state) => { state.lastCompiledCode = code; }),
+      setLastCompiledGraph: (graph) => set((state) => { state.lastCompiledGraph = graph; }),
       
       clearCompilationResults: () => set((state) => {
         state.compiledHex = null;
         state.compilationErrors = [];
         state.compilationWarnings = [];
+        state.lastCompiledCode = null;
+        state.lastCompiledGraph = null;
       })
     })),
     { name: 'editor-store', enabled: (import.meta as any).env ? (import.meta as any).env.DEV : true }

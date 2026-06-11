@@ -1,5 +1,6 @@
 import { useEditorStore } from '../store/editorStore';
 import { useSimulationStore } from '../store/simulationStore';
+import { useWorkspaceStore } from '../store/workspaceStore';
 import { enhanceError } from '../utils/errorEnhancer';
 import { CodeEditorRef } from '../components/editor/CodeEditor';
 import toast from 'react-hot-toast';
@@ -11,6 +12,11 @@ export function useCompiler() {
   const setCompilationWarnings = useEditorStore(state => state.setCompilationWarnings);
   const setCompilationErrors = useEditorStore(state => state.setCompilationErrors);
   const setLastCompileTime = useEditorStore(state => state.setLastCompileTime);
+  const compiledHex = useEditorStore(state => state.compiledHex);
+  const lastCompiledCode = useEditorStore(state => state.lastCompiledCode);
+  const lastCompiledGraph = useEditorStore(state => state.lastCompiledGraph);
+  const setLastCompiledCode = useEditorStore(state => state.setLastCompiledCode);
+  const setLastCompiledGraph = useEditorStore(state => state.setLastCompiledGraph);
   
   const status = useSimulationStore(state => state.status);
   const setStatus = useSimulationStore(state => state.setStatus);
@@ -21,6 +27,18 @@ export function useCompiler() {
     if (status === 'RUNNING') {
       setStatus('COMPILED'); // Stopping simulation
       await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    const currentGraph = JSON.stringify(useWorkspaceStore.getState().buildCircuitGraph());
+
+    if (
+      compiledHex &&
+      lastCompiledCode === code &&
+      lastCompiledGraph === currentGraph
+    ) {
+      toast.success('Already compiled and up to date!', { icon: '✅', style: { background: '#059669', color: '#fff' } });
+      setStatus('COMPILED');
+      return;
     }
 
     setIsCompiling(true);
@@ -46,6 +64,8 @@ export function useCompiler() {
 
       if (result.success) {
         setCompiledHex(result.hex || null);
+        setLastCompiledCode(code);
+        setLastCompiledGraph(currentGraph);
         setCompilationWarnings(result.warnings || []);
         setCompilationErrors([]);
         
