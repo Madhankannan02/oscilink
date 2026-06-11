@@ -71,7 +71,7 @@ export const WireLayer: React.FC<WireLayerProps> = ({ previewWirePoints }) => {
     for (const [color, colorWires] of Object.entries(colorGroups)) {
       context.beginPath();
       context.strokeStyle = colorMap[color] || colorMap.blue;
-      context.lineWidth = 2.5;
+      context.lineWidth = 1.5;
       context.lineJoin = 'round';
       context.lineCap = 'round';
       
@@ -105,7 +105,7 @@ export const WireLayer: React.FC<WireLayerProps> = ({ previewWirePoints }) => {
           <Line
             points={wire.points}
             stroke="white"
-            strokeWidth={6}
+            strokeWidth={5}
             opacity={0.8}
             lineJoin="round"
             lineCap="round"
@@ -117,7 +117,7 @@ export const WireLayer: React.FC<WireLayerProps> = ({ previewWirePoints }) => {
           <Line
             points={wire.points}
             stroke={colorMap.error}
-            strokeWidth={4}
+            strokeWidth={3}
             lineJoin="round"
             lineCap="round"
             dash={[10, 5]}
@@ -133,7 +133,7 @@ export const WireLayer: React.FC<WireLayerProps> = ({ previewWirePoints }) => {
           <Line
             points={wire.points}
             stroke={colorMap[wire.color || 'blue']}
-            strokeWidth={2.5}
+            strokeWidth={1.5}
             lineJoin="round"
             lineCap="round"
             listening={false}
@@ -166,7 +166,7 @@ export const WireLayer: React.FC<WireLayerProps> = ({ previewWirePoints }) => {
               <Line
                 points={wire.points}
                 stroke={colorMap[wire.color || 'blue']}
-                strokeWidth={4}
+                strokeWidth={3}
                 opacity={0.5}
                 listening={false}
               />
@@ -216,7 +216,7 @@ export const WireLayer: React.FC<WireLayerProps> = ({ previewWirePoints }) => {
         <Line
           points={previewWirePoints}
           stroke="#06b6d4"
-          strokeWidth={2}
+          strokeWidth={1.5}
           dash={[10, 10]}
           lineJoin="round"
           sceneFunc={(ctx, shape) => {
