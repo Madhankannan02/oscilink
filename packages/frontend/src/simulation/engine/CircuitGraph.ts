@@ -46,7 +46,8 @@ export interface LEDState {
 }
 
 export interface ServoState {
-  angle: number;
+  angle?: number;
+  speed?: number;
 }
 
 export interface BuzzerState {
@@ -490,17 +491,30 @@ export function calculateLEDState(ledComponent: GraphComponent, graph: CircuitGr
   return { isOn, brightness, current };
 }
 
-export function calculateServoState(lastDutyCycle: number, minPulse = 544, maxPulse = 2400): ServoState {
+export function calculateServoState(lastDutyCycle: number, minPulse = 544, maxPulse = 2400, servoType = 'positional'): ServoState {
   const pulseWidth = lastDutyCycle * 20000;
   
-  let angle = 0;
-  if (pulseWidth >= minPulse && pulseWidth <= maxPulse) {
-    angle = ((pulseWidth - minPulse) / (maxPulse - minPulse)) * 180.0;
-  } else if (pulseWidth > maxPulse) {
-    angle = 180;
+  if (servoType === 'continuous') {
+    // 1500us is stop (deadzone 1480-1520)
+    // < 1480 is backward (544 is full speed -1)
+    // > 1520 is forward (2400 is full speed +1)
+    let speed = 0;
+    if (pulseWidth < 1480) {
+      speed = -1.0 + Math.max(0, (pulseWidth - minPulse) / (1480 - minPulse));
+      speed = Math.max(-1.0, speed);
+    } else if (pulseWidth > 1520) {
+      speed = Math.min(1.0, (pulseWidth - 1520) / (maxPulse - 1520));
+    }
+    return { speed };
+  } else {
+    let angle = 0;
+    if (pulseWidth >= minPulse && pulseWidth <= maxPulse) {
+      angle = ((pulseWidth - minPulse) / (maxPulse - minPulse)) * 180.0;
+    } else if (pulseWidth > maxPulse) {
+      angle = 180;
+    }
+    return { angle };
   }
-  
-  return { angle };
 }
 
 export function calculateBuzzerState(buzzerComponent: GraphComponent, graph: CircuitGraph): BuzzerState {

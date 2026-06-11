@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useWorkspaceStore } from '../../store/workspaceStore';
 import { CircuitComponent } from '../../types/components';
+import { simulationManager } from '../../simulation/SimulationManager';
 
 export const PropertiesPanel: React.FC<{ rightPanelOpen?: boolean }> = ({ rightPanelOpen }) => {
   const selectedComponentIds = useWorkspaceStore((state: any) => state.selectedComponentIds);
@@ -81,7 +82,7 @@ export const PropertiesPanel: React.FC<{ rightPanelOpen?: boolean }> = ({ rightP
   if (!selectedComponent) return null;
 
   // Only show for supported components
-  if (selectedComponent.type !== 'RESISTOR' && selectedComponent.type !== 'LED') return null;
+  if (selectedComponent.type !== 'RESISTOR' && selectedComponent.type !== 'LED' && selectedComponent.type !== 'SERVO_MOTOR') return null;
 
   const handleResistanceChange = (valStr: string, unit: number) => {
     setLocalResistanceValue(valStr);
@@ -112,7 +113,7 @@ export const PropertiesPanel: React.FC<{ rightPanelOpen?: boolean }> = ({ rightP
       {/* Header */}
       <div className="bg-surface border-b border-border px-3 py-2.5 flex justify-between items-center">
         <span className="font-semibold text-sm text-text">
-          {selectedComponent.type === 'RESISTOR' ? 'Resistor' : 'LED'} Properties
+          {selectedComponent.type === 'RESISTOR' ? 'Resistor' : selectedComponent.type === 'LED' ? 'LED' : 'Micro Servo'} Properties
         </span>
       </div>
 
@@ -128,8 +129,9 @@ export const PropertiesPanel: React.FC<{ rightPanelOpen?: boolean }> = ({ rightP
             onChange={(e) => {
               setLocalName(e.target.value);
               updateComponentProperties(selectedComponent.id, { name: e.target.value });
+              simulationManager.updateComponentProperties(selectedComponent.id, { name: e.target.value });
             }}
-            placeholder={selectedComponent.type === 'RESISTOR' ? 'e.g. R1' : 'e.g. LED1'}
+            placeholder={selectedComponent.type === 'RESISTOR' ? 'e.g. R1' : selectedComponent.type === 'LED' ? 'e.g. LED1' : 'e.g. Servo1'}
           />
         </div>
 
@@ -175,6 +177,7 @@ export const PropertiesPanel: React.FC<{ rightPanelOpen?: boolean }> = ({ rightP
                   onClick={() => {
                     setLedColor(color);
                     updateComponentProperties(selectedComponent.id, { color });
+                    simulationManager.updateComponentProperties(selectedComponent.id, { color });
                   }}
                   className={`w-6 h-6 rounded-full cursor-pointer transition-all ${
                     ledColor === color ? 'ring-2 ring-primary ring-offset-2 ring-offset-surface scale-110' : 'hover:scale-110 opacity-80 hover:opacity-100'
@@ -183,6 +186,26 @@ export const PropertiesPanel: React.FC<{ rightPanelOpen?: boolean }> = ({ rightP
                   title={`${color} LED`}
                 />
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Servo Specific Fields */}
+        {selectedComponent.type === 'SERVO_MOTOR' && (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-text-secondary">Type</label>
+            <div className="flex rounded border border-border overflow-hidden focus-within:border-primary transition-colors bg-surface-hover">
+              <select 
+                className="flex-1 min-w-0 bg-transparent outline-none text-sm px-2.5 py-1.5 text-text cursor-pointer hover:bg-surface transition-colors"
+                value={selectedComponent.properties?.servoType || 'positional'}
+                onChange={(e) => {
+                  updateComponentProperties(selectedComponent.id, { servoType: e.target.value });
+                  simulationManager.updateComponentProperties(selectedComponent.id, { servoType: e.target.value });
+                }}
+              >
+                <option value="positional">Positional</option>
+                <option value="continuous">Continuous</option>
+              </select>
             </div>
           </div>
         )}

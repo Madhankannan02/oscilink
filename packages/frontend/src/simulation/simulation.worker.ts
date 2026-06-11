@@ -193,7 +193,8 @@ function handlePinChange(pinName: string, voltage: number) {
               if (circuitGraph.findPath(nodeId, `${id}.SIGNAL`)) {
                 // calculateServoState expects dutyCycle based on 20000us period
                 const pseudoDutyCycle = pulseWidthUs / 20000;
-                const state = calculateServoState(pseudoDutyCycle);
+                const servoType = comp.properties?.servoType || 'positional';
+                const state = calculateServoState(pseudoDutyCycle, 544, 2400, servoType);
                 queueComponentUpdate(id, state);
               }
             }
@@ -377,6 +378,15 @@ self.onmessage = function (e) {
       stopSimulation();
       if (lastHex && lastGraphData) {
         initializeSimulation(lastHex, lastGraphData);
+      }
+      break;
+
+    case 'UPDATE_PROPERTIES':
+      if (circuitGraph) {
+        const comp = circuitGraph.components.get(payload.componentId);
+        if (comp) {
+          comp.properties = { ...comp.properties, ...payload.properties };
+        }
       }
       break;
 

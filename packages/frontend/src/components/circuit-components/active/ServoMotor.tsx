@@ -20,14 +20,24 @@ export const ServoMotor: React.FC<ServoMotorProps> = ({ component }) => {
   const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = useContext(CanvasContext);
 
   const compState = useSimulationStore((state) => state.componentStates[component.id]);
+  const servoType = component.properties?.servoType || 'positional';
   const targetAngle = (compState as { angle?: number })?.angle ?? 90;
+  const targetSpeed = (compState as { speed?: number })?.speed ?? 0;
 
   useEffect(() => {
-    const updateAnimation = () => {
+    let lastTime = performance.now();
+    const updateAnimation = (time: number) => {
+      const dt = time - lastTime;
+      lastTime = time;
+
       setDisplayedAngle(current => {
-        const diff = targetAngle - current;
-        if (Math.abs(diff) < 0.5) return targetAngle;
-        return current + diff * 0.15;
+        if (servoType === 'continuous') {
+          return current + targetSpeed * 0.36 * dt;
+        } else {
+          const diff = targetAngle - current;
+          if (Math.abs(diff) < 0.5) return targetAngle;
+          return current + diff * 0.15;
+        }
       });
       animFrameRef.current = requestAnimationFrame(updateAnimation);
     };
@@ -35,7 +45,7 @@ export const ServoMotor: React.FC<ServoMotorProps> = ({ component }) => {
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [targetAngle]);
+  }, [targetAngle, targetSpeed, servoType]);
 
   const handleDragStart = () => {
     useWorkspaceStore.getState().pushHistory();
@@ -162,29 +172,49 @@ export const ServoMotor: React.FC<ServoMotorProps> = ({ component }) => {
 
       {/* Output Shaft & Arm Pivot at Top Center */}
       <Group x={25} y={-2}>
-        {/* White Cross Arm */}
         <Group rotation={visualAngle}>
-          {/* Outline */}
-          <Line points={[0, -20, 0, 20]} stroke="#9ca3af" strokeWidth={10} lineCap="round" />
-          <Line points={[-12, 0, 12, 0]} stroke="#9ca3af" strokeWidth={10} lineCap="round" />
-          <Circle x={0} y={0} radius={11} fill="#9ca3af" />
-          
-          {/* Inner fill */}
-          <Line points={[0, -20, 0, 20]} stroke="#f3f4f6" strokeWidth={8} lineCap="round" />
-          <Line points={[-12, 0, 12, 0]} stroke="#f3f4f6" strokeWidth={8} lineCap="round" />
-          <Circle x={0} y={0} radius={10} fill="#f3f4f6" />
+          {servoType === 'positional' ? (
+            <>
+              {/* White Cross Arm */}
+              {/* Outline */}
+              <Line points={[0, -20, 0, 20]} stroke="#9ca3af" strokeWidth={10} lineCap="round" />
+              <Line points={[-12, 0, 12, 0]} stroke="#9ca3af" strokeWidth={10} lineCap="round" />
+              <Circle x={0} y={0} radius={11} fill="#9ca3af" />
+              
+              {/* Inner fill */}
+              <Line points={[0, -20, 0, 20]} stroke="#f3f4f6" strokeWidth={8} lineCap="round" />
+              <Line points={[-12, 0, 12, 0]} stroke="#f3f4f6" strokeWidth={8} lineCap="round" />
+              <Circle x={0} y={0} radius={10} fill="#f3f4f6" />
 
-          {/* Center screw */}
+              {/* Holes in the arms */}
+              {[ -6, -9, -12, -15, -18 ].map(y => <Circle key={`t${y}`} x={0} y={y} radius={1} fill="#9ca3af" />)}
+              {[ 6, 9, 12, 15, 18 ].map(y => <Circle key={`b${y}`} x={0} y={y} radius={1} fill="#9ca3af" />)}
+              {[ -6, -10 ].map(x => <Circle key={`l${x}`} x={x} y={0} radius={1} fill="#9ca3af" />)}
+              {[ 6, 10 ].map(x => <Circle key={`r${x}`} x={x} y={0} radius={1} fill="#9ca3af" />)}
+            </>
+          ) : (
+            <>
+              {/* Continuous Wheel */}
+              <Circle radius={30} fill="#333333" stroke="#222222" strokeWidth={2} />
+              {/* Inner Hub */}
+              <Circle radius={10} fill="#262626" />
+              {/* Spokes */}
+              {[0, 72, 144, 216, 288].map(ang => (
+                <Group key={ang} rotation={ang}>
+                  <Rect x={8} y={-3} width={22} height={6} fill="#262626" />
+                  <Rect x={12} y={-1.5} width={15} height={3} fill="#1a1a1a" cornerRadius={1} />
+                </Group>
+              ))}
+              {/* Rim highlight */}
+              <Circle radius={28} stroke="#404040" strokeWidth={1} />
+            </>
+          )}
+
+          {/* Center screw (shared) */}
           <Circle x={0} y={0} radius={5} fill="#e5e7eb" stroke="#9ca3af" strokeWidth={1} />
           <Line points={[-2.5, 0, 2.5, 0]} stroke="#6b7280" strokeWidth={1} />
           <Line points={[0, -2.5, 0, 2.5]} stroke="#6b7280" strokeWidth={1} />
           <Circle x={0} y={0} radius={2.5} stroke="#6b7280" strokeWidth={0.5} />
-
-          {/* Holes in the arms */}
-          {[ -6, -9, -12, -15, -18 ].map(y => <Circle key={`t${y}`} x={0} y={y} radius={1} fill="#9ca3af" />)}
-          {[ 6, 9, 12, 15, 18 ].map(y => <Circle key={`b${y}`} x={0} y={y} radius={1} fill="#9ca3af" />)}
-          {[ -6, -10 ].map(x => <Circle key={`l${x}`} x={x} y={0} radius={1} fill="#9ca3af" />)}
-          {[ 6, 10 ].map(x => <Circle key={`r${x}`} x={x} y={0} radius={1} fill="#9ca3af" />)}
         </Group>
       </Group>
 

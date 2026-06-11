@@ -162,7 +162,7 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
       pins['GND'] = createPin('GND', 'GND', 'ground', 'input', { x: 15, y: 40 });
       pins['VCC'] = createPin('VCC', 'VCC', 'power', 'input', { x: 25, y: 40 });
       pins['SIGNAL'] = createPin('SIGNAL', 'SIG', 'PWM', 'input', { x: 35, y: 40 });
-      properties = { minPulse: 544, maxPulse: 2400 };
+      properties = { minPulse: 544, maxPulse: 2400, servoType: 'positional' };
       break;
     }
 

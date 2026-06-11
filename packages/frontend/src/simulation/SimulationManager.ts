@@ -137,6 +137,10 @@ class SimulationManager {
     this.worker?.postMessage({ type: 'SERIAL_INPUT', payload: { text } });
   }
 
+  public updateComponentProperties(componentId: string, properties: any) {
+    this.worker?.postMessage({ type: 'UPDATE_PROPERTIES', payload: { componentId, properties } });
+  }
+
   public destroy() {
     this.stop();
     this.worker?.terminate();
