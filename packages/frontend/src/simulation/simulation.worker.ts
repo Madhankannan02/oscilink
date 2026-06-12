@@ -15,7 +15,7 @@ import {
   adcConfig
 } from 'avr8js';
 
-import { CircuitGraph, calculateLEDState, calculateBuzzerState, calculateServoState } from './engine/CircuitGraph';
+import { CircuitGraph, calculateLEDState, calculateBuzzerState, calculateServoState, calculateRelayState } from './engine/CircuitGraph';
 import { HD44780 } from './engine/HD44780';
 
 class AVRRunner {
@@ -297,6 +297,21 @@ function handlePinChange(pinName: string, voltage: number) {
         } else if (comp.type === 'BUZZER') {
           const state = calculateBuzzerState(comp, circuitGraph);
           queueComponentUpdate(id, state);
+        } else if (comp.type === 'RELAY') {
+          const state = calculateRelayState(comp, circuitGraph);
+          queueComponentUpdate(id, state);
+          
+          const comNode = `${id}.COM`;
+          const noNode = `${id}.NO`;
+          const ncNode = `${id}.NC`;
+          
+          if (state.isActivated) {
+            circuitGraph.openSwitch(comNode, ncNode);
+            circuitGraph.closeSwitch(comNode, noNode);
+          } else {
+            circuitGraph.openSwitch(comNode, noNode);
+            circuitGraph.closeSwitch(comNode, ncNode);
+          }
         } else if (comp.type === 'SERVO_MOTOR') {
           // Servos are updated by pulse width measurement, not directly by voltage
         } else if (comp.type === 'LCD_16X2') {

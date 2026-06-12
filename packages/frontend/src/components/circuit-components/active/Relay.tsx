@@ -48,10 +48,10 @@ export const Relay: React.FC<RelayProps> = ({ component }) => {
 
   const renderPins = () => {
     return Object.values(component.pins).map((pin) => {
-      const isCommon = COMMONLY_USED_PINS.includes(pin.label);
+      const isCommon = COMMONLY_USED_PINS.includes(pin.id);
       const isHovered = hoveredPin === pin.id;
       
-      const isRightSide = pin.label === 'NO' || pin.label === 'COM' || pin.label === 'NC';
+      const isTopSide = ['NO', 'COM', 'NC'].includes(pin.id);
       
       return (
         <Group
@@ -76,42 +76,30 @@ export const Relay: React.FC<RelayProps> = ({ component }) => {
             if (isCommon) onPinMouseDown(e, pin.id);
           }}
         >
-          {isRightSide ? (
-            <Group>
-              <Rect x={0} y={-4} width={8} height={8} fill="#d1d5db" />
-              <Circle x={4} y={0} radius={2} fill="#4b5563" />
-              <Text 
-                text={pin.label} 
-                x={12} y={-3} 
-                fontSize={7} 
-                fontFamily="monospace"
-                fill="#374151" 
-              />
-            </Group>
-          ) : (
-            <Group>
-              <Rect x={-3} y={0} width={6} height={8} fill="#9ca3af" />
-              <Text 
-                text={pin.label} 
-                x={-15} y={12} 
-                width={30} 
-                align="center" 
-                fontSize={7} 
-                fontFamily="monospace"
-                fill="#374151" 
-              />
-            </Group>
+          {!isTopSide && (
+            // Red pin extending from PCB bottom to connection point
+            <Rect x={-1.5} y={-12} width={3} height={12} fill="#ef4444" />
           )}
 
           {isCommon && (
-            <Group x={isRightSide ? 8 : 0} y={isRightSide ? 0 : 8}>
-              <Circle x={0} y={0} radius={6} fill="transparent" />
+            <Group x={0} y={0}>
+              <Circle x={0} y={0} radius={8} fill="transparent" />
               <Circle
                 x={0} y={0}
                 radius={isHovered ? 2.5 : 1.5}
                 fill="#171717"
                 stroke={isHovered ? '#fbbf24' : '#404040'}
                 strokeWidth={isHovered ? 1 : 0.5}
+                shadowColor={isHovered ? '#fbbf24' : 'transparent'}
+                shadowBlur={isHovered ? 5 : 0}
+              />
+              <Text 
+                text={pin.id === 'IN' ? 'Signal Pin' : pin.id === 'VCC' ? 'VCC' : pin.id === 'GND' ? 'GND' : pin.id} 
+                visible={isHovered}
+                x={-20} y={isTopSide ? -10 : 6} 
+                width={40} align="center" 
+                fontSize={7} fontFamily="sans-serif" fontStyle="bold"
+                fill="#374151" opacity={0.85}
               />
             </Group>
           )}
@@ -132,43 +120,75 @@ export const Relay: React.FC<RelayProps> = ({ component }) => {
       onClick={handleClick}
       onTap={handleClick}
     >
-      <Group x={-7} y={-32}>
-        <Rect width={44} height={32} fill="#1e293b" cornerRadius={2} />
+      <Group x={-35} y={-50}>
+        {/* Main PCB */}
+        <Rect width={70} height={100} fill="#262626" cornerRadius={2} />
         
-        {/* Label */}
-        <Text text="RELAY" x={2} y={2} fontSize={6} fill="#ffffff" />
+        {/* Mounting holes */}
+        <Circle x={5} y={5} radius={2} fill="#e5e7eb" />
+        <Circle x={65} y={5} radius={2} fill="#e5e7eb" />
+        <Circle x={5} y={95} radius={2} fill="#e5e7eb" />
+        <Circle x={65} y={95} radius={2} fill="#e5e7eb" />
 
-        {/* LED Indicator */}
-        <Circle x={38} y={5} radius={1.5} fill={isActivated ? '#ef4444' : '#4b5563'} shadowColor={isActivated ? '#ef4444' : 'transparent'} shadowBlur={isActivated ? 4 : 0} />
+        {/* Top Terminal Block (Blue) */}
+        <Rect x={10} y={0} width={55} height={20} fill="#3b82f6" stroke="#1d4ed8" strokeWidth={1} />
+        {/* Screw terminals */}
+        {[20, 37.5, 55].map((x) => (
+          <Group key={x} x={x} y={10}>
+            <Circle radius={6} fill="#fcd34d" stroke="#b45309" strokeWidth={1} />
+            <Line points={[-4, -4, 4, 4]} stroke="#b45309" strokeWidth={1.5} />
+          </Group>
+        ))}
+        {/* Terminal Labels */}
+        <Text text="NC" x={16} y={22} fontSize={7} fill="#ffffff" fontFamily="monospace" />
+        <Text text="C" x={35} y={22} fontSize={7} fill="#ffffff" fontFamily="monospace" />
+        <Text text="NO" x={51} y={22} fontSize={7} fill="#ffffff" fontFamily="monospace" />
 
-        {/* Coil Symbol */}
-        <Group x={6} y={12}>
-          <Rect x={0} y={0} width={8} height={12} stroke="#94a3b8" strokeWidth={1} />
-          <Line points={[0, 2, 8, 2]} stroke="#94a3b8" strokeWidth={1} />
-          <Line points={[0, 6, 8, 6]} stroke="#94a3b8" strokeWidth={1} />
-          <Line points={[0, 10, 8, 10]} stroke="#94a3b8" strokeWidth={1} />
+        {/* Main Relay Box */}
+        <Rect x={20} y={32} width={45} height={50} fill="#3b82f6" />
+        {/* Text on Relay Box (rotated) */}
+        <Group x={25} y={80} rotation={-90}>
+          <Text text="SRD-05VDC-SL-C" x={0} y={0} fontSize={6} fill="#ffffff" fontFamily="monospace" />
+          <Text text="10A 250VAC 10A 125VAC" x={0} y={10} fontSize={4} fill="#ffffff" fontFamily="monospace" />
+          <Text text="10A 30VDC  10A 28VDC" x={0} y={18} fontSize={4} fill="#ffffff" fontFamily="monospace" />
         </Group>
 
-        {/* Switch Symbol */}
-        <Group x={24} y={12}>
-          {/* COM Terminal line */}
-          <Line points={[0, 12, 0, 8]} stroke="#94a3b8" strokeWidth={1} />
-          {/* NC Terminal line */}
-          <Line points={[12, 0, 12, 4]} stroke="#94a3b8" strokeWidth={1} />
-          {/* NO Terminal line */}
-          <Line points={[12, 12, 12, 8]} stroke="#94a3b8" strokeWidth={1} />
-          
-          {/* Moving contact */}
-          <Line 
-            points={isActivated ? [0, 8, 11, 8] : [0, 8, 11, 4]} 
-            stroke="#94a3b8" 
-            strokeWidth={1} 
-          />
-          
-          <Circle x={0} y={8} radius={1} fill="#94a3b8" />
-          <Circle x={12} y={4} radius={1} fill="#94a3b8" />
-          <Circle x={12} y={8} radius={1} fill="#94a3b8" />
-        </Group>
+        {/* Right side text */}
+        <Text text="Keyes_SR1y" x={68} y={85} rotation={-90} fontSize={8} fill="#ffffff" fontFamily="monospace" />
+
+        {/* Left side components */}
+        {/* Diode D1 */}
+        <Text text="D1" x={2} y={35} rotation={-90} fontSize={5} fill="#ffffff" />
+        <Rect x={8} y={30} width={6} height={14} fill="#000000" />
+        <Rect x={8} y={30} width={6} height={3} fill="#9ca3af" />
+        <Circle x={11} y={28} radius={1} fill="#9ca3af" />
+        <Circle x={11} y={46} radius={1} fill="#9ca3af" />
+        
+        {/* Transistor Q1 */}
+        <Text text="Q1" x={2} y={55} rotation={-90} fontSize={5} fill="#ffffff" />
+        <Rect x={8} y={52} width={6} height={5} fill="#000000" />
+        <Line points={[9, 57, 9, 59]} stroke="#9ca3af" strokeWidth={1} />
+        <Line points={[11, 57, 11, 59]} stroke="#9ca3af" strokeWidth={1} />
+        <Line points={[13, 57, 13, 59]} stroke="#9ca3af" strokeWidth={1} />
+        
+        {/* Resistor R1 */}
+        <Text text="R1" x={18} y={75} rotation={-90} fontSize={5} fill="#ffffff" />
+        <Rect x={8} y={65} width={6} height={12} fill="#000000" stroke="#ffffff" strokeWidth={0.5} />
+        <Circle x={11} y={63} radius={1} fill="#9ca3af" />
+        <Circle x={11} y={79} radius={1} fill="#9ca3af" />
+
+        {/* Bottom Left LED */}
+        <Text text="ON_Led" x={4} y={85} fontSize={5} fill="#ffffff" />
+        <Rect x={8} y={92} width={6} height={4} fill={isActivated ? "#ef4444" : "#4b5563"} />
+
+        {/* Bottom Right Header block */}
+        <Rect x={35} y={85} width={30} height={15} stroke="#ffffff" strokeWidth={0.5} />
+        <Text text="S" x={38} y={86} fontSize={6} fill="#ffffff" />
+        <Text text="-" x={58} y={86} fontSize={6} fill="#ffffff" />
+        {/* Black headers */}
+        <Rect x={38} y={93} width={4} height={7} fill="#000000" />
+        <Rect x={48} y={93} width={4} height={7} fill="#000000" />
+        <Rect x={58} y={93} width={4} height={7} fill="#000000" />
       </Group>
 
       {renderPins()}

@@ -218,13 +218,16 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
     }
 
     case 'RELAY': {
-      pins['VCC'] = createPin('VCC', 'VCC', 'power', 'input', { x: 0, y: 10 });
-      pins['GND'] = createPin('GND', 'GND', 'ground', 'input', { x: 0, y: 30 });
-      pins['IN'] = createPin('IN', 'IN', 'digital', 'input', { x: 0, y: 50 });
+      // Top pins (Blue terminal block screws)
+      pins['NC'] = createPin('NC', 'NC', 'digital', 'bidirectional', { x: -15, y: -40 });
+      pins['COM'] = createPin('COM', 'C', 'digital', 'bidirectional', { x: 2.5, y: -40 });
+      pins['NO'] = createPin('NO', 'NO', 'digital', 'bidirectional', { x: 20, y: -40 });
 
-      pins['NO'] = createPin('NO', 'NO', 'digital', 'bidirectional', { x: 60, y: 10 });
-      pins['NC'] = createPin('NC', 'NC', 'digital', 'bidirectional', { x: 60, y: 50 });
-      pins['COM'] = createPin('COM', 'COM', 'digital', 'bidirectional', { x: 60, y: 30 });
+      // Bottom pins (Tips of the red headers)
+      pins['IN'] = createPin('IN', 'S', 'digital', 'input', { x: 5, y: 62 });
+      pins['VCC'] = createPin('VCC', 'VCC', 'power', 'input', { x: 15, y: 62 });
+      pins['GND'] = createPin('GND', '-', 'ground', 'input', { x: 25, y: 62 });
+      
       properties = { triggerVoltage: 5 };
       break;
     }

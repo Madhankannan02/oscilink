@@ -42,7 +42,7 @@ export const getComponentBounds = (comp: CircuitComponent) => {
       width = 104; height = 58; offsetX = -52; offsetY = -58;
       break;
     case 'RELAY':
-      width = 44; height = 32; offsetX = -7; offsetY = -32;
+      width = 70; height = 100; offsetX = -35; offsetY = -50;
       break;
     case 'BREADBOARD':
       width = 300; height = 100; offsetX = -5; offsetY = -5;
