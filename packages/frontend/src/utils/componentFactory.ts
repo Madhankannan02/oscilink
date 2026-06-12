@@ -201,10 +201,9 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
     }
 
     case 'ULTRASONIC_SENSOR': {
-      pins['VCC'] = createPin('VCC', 'VCC', 'power', 'input', { x: 10, y: 40 });
-      pins['TRIG'] = createPin('TRIG', 'TRIG', 'digital', 'output', { x: 25, y: 40 });
-      pins['ECHO'] = createPin('ECHO', 'ECHO', 'digital', 'input', { x: 40, y: 40 });
-      pins['GND'] = createPin('GND', 'GND', 'ground', 'input', { x: 55, y: 40 });
+      pins['GND'] = createPin('GND', 'GND', 'ground', 'input', { x: -5, y: 0 });
+      pins['5V'] = createPin('5V', '5V', 'power', 'input', { x: 0, y: 0 });
+      pins['SIG'] = createPin('SIG', 'SIG', 'digital', 'bidirectional', { x: 5, y: 0 });
       properties = { maxRangeCm: 400 };
       break;
     }

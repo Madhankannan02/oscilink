@@ -32,11 +32,13 @@ export const getComponentBounds = (comp: CircuitComponent) => {
       width = 50; height = 50; offsetX = -5; offsetY = -5;
       break;
     case 'LCD_16X2':
-      width = 140; height = 40; offsetX = -5; offsetY = -5;
+      width = 176; height = 72; offsetX = -12; offsetY = -72;
       break;
     case 'ULTRASONIC_SENSOR':
+      width = 104; height = 58; offsetX = -52; offsetY = -58;
+      break;
     case 'RELAY':
-      width = 70; height = 50; offsetX = -5; offsetY = -5;
+      width = 44; height = 32; offsetX = -7; offsetY = -32;
       break;
     case 'BREADBOARD':
       width = 300; height = 100; offsetX = -5; offsetY = -5;
