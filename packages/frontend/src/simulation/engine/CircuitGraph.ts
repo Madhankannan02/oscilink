@@ -493,12 +493,13 @@ export function calculateLEDState(ledComponent: GraphComponent, graph: CircuitGr
 
 export interface RelayState {
   isActivated: boolean;
+  coilVoltage?: number;
 }
 
 export function calculateRelayState(relayComponent: GraphComponent, graph: CircuitGraph): RelayState {
   const vIn = graph.getNodeVoltage(relayComponent.id, 'IN');
   const isActivated = vIn > 2.5;
-  return { isActivated };
+  return { isActivated, coilVoltage: vIn };
 }
 
 export function calculateServoState(lastDutyCycle: number, minPulse = 544, maxPulse = 2400, servoType = 'positional'): ServoState {

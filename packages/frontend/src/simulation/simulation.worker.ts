@@ -293,6 +293,7 @@ function handlePinChange(pinName: string, voltage: number) {
       for (const [id, comp] of circuitGraph.components.entries()) {
         if (comp.type === 'RELAY') {
           const state = calculateRelayState(comp, circuitGraph);
+          
           queueComponentUpdate(id, state);
           
           const comNode = `${id}.COM`;
