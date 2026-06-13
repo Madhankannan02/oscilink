@@ -482,8 +482,12 @@ export function calculateLEDState(ledComponent: GraphComponent, graph: CircuitGr
   let brightness = 0;
   let isOn = false;
 
-  if (voltageDrop > forwardVoltage && seriesResistance > 0) {
-    current = ((voltageDrop - forwardVoltage) / seriesResistance) * 1000;
+  if (voltageDrop > forwardVoltage) {
+    if (seriesResistance > 0) {
+      current = ((voltageDrop - forwardVoltage) / seriesResistance) * 1000;
+    } else {
+      current = 1000; // Fake a massive current when there is no resistor so it still lights up
+    }
     brightness = Math.min(Math.max(current / 20.0, 0), 1.0);
     isOn = brightness > 0;
   }
