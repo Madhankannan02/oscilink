@@ -289,15 +289,9 @@ function handlePinChange(pinName: string, voltage: number) {
       // 2. Propagate
       circuitGraph.propagateVoltage(nodeId, voltage);
 
-      // 3. Update all components that might have changed
+      // 3. Update graph topology (components that modify switches/connections)
       for (const [id, comp] of circuitGraph.components.entries()) {
-        if (comp.type === 'LED') {
-          const state = calculateLEDState(comp, circuitGraph);
-          queueComponentUpdate(id, state);
-        } else if (comp.type === 'BUZZER') {
-          const state = calculateBuzzerState(comp, circuitGraph);
-          queueComponentUpdate(id, state);
-        } else if (comp.type === 'RELAY') {
+        if (comp.type === 'RELAY') {
           const state = calculateRelayState(comp, circuitGraph);
           queueComponentUpdate(id, state);
           
@@ -312,8 +306,17 @@ function handlePinChange(pinName: string, voltage: number) {
             circuitGraph.openSwitch(comNode, noNode);
             circuitGraph.closeSwitch(comNode, ncNode);
           }
-        } else if (comp.type === 'SERVO_MOTOR') {
-          // Servos are updated by pulse width measurement, not directly by voltage
+        }
+      }
+
+      // 4. Update state-dependent components (LEDs, LCDs, etc.)
+      for (const [id, comp] of circuitGraph.components.entries()) {
+        if (comp.type === 'LED') {
+          const state = calculateLEDState(comp, circuitGraph);
+          queueComponentUpdate(id, state);
+        } else if (comp.type === 'BUZZER') {
+          const state = calculateBuzzerState(comp, circuitGraph);
+          queueComponentUpdate(id, state);
         } else if (comp.type === 'LCD_16X2') {
           if (!lcdControllers[id]) {
             lcdControllers[id] = new HD44780();
