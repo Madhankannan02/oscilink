@@ -392,19 +392,23 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
         const errors = validateCircuit(state.components, state.wires, graph);
         console.log('[Validator] Executed all rules. Errors found:', errors);
         
+        const isRunning = useSimulationStore.getState().status === 'RUNNING';
+        
         // Find newly introduced errors by matching the message
         const oldMessages = new Set(oldErrors.map(e => e.message));
         const newErrors = errors.filter(e => !oldMessages.has(e.message));
         
-        newErrors.forEach(err => {
-          if (err.severity === 'error') {
-            toast.error(err.message, { id: err.message, duration: 5000 });
-          } else if (err.severity === 'warning') {
-            toast(err.message, { id: err.message, icon: '⚠️', duration: 4000 });
-          } else {
-            toast(err.message, { id: err.message, icon: 'ℹ️', duration: 3000 });
-          }
-        });
+        if (isRunning) {
+          newErrors.forEach(err => {
+            if (err.severity === 'error') {
+              toast.error(err.message, { id: err.message, duration: 5000 });
+            } else if (err.severity === 'warning') {
+              toast(err.message, { id: err.message, icon: '⚠️', duration: 4000 });
+            } else {
+              toast(err.message, { id: err.message, icon: 'ℹ️', duration: 3000 });
+            }
+          });
+        }
 
         useSimulationStore.getState().setCircuitErrors(errors);
       }
@@ -421,6 +425,21 @@ useWorkspaceStore.subscribe((state, prevState) => {
     validationDebounceTimer = setTimeout(() => {
       useWorkspaceStore.getState().validateCircuit();
     }, 400);
+  }
+});
+
+// Trigger toasts for existing errors when simulation starts
+useSimulationStore.subscribe((state, prevState) => {
+  if (state.status === 'RUNNING' && prevState.status !== 'RUNNING') {
+    state.circuitErrors.forEach(err => {
+      if (err.severity === 'error') {
+        toast.error(err.message, { id: err.message, duration: 5000 });
+      } else if (err.severity === 'warning') {
+        toast(err.message, { id: err.message, icon: '⚠️', duration: 4000 });
+      } else {
+        toast(err.message, { id: err.message, icon: 'ℹ️', duration: 3000 });
+      }
+    });
   }
 });
 
