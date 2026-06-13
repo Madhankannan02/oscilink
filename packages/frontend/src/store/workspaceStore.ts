@@ -33,6 +33,7 @@ interface WorkspaceState {
   mousePosition: Point;
   history: WorkspaceSnapshot[];
   historyIndex: number;
+  focusTrigger: { ids: string[]; timestamp: number } | null;
   panMode: boolean;
 }
 
@@ -55,6 +56,8 @@ interface WorkspaceActions {
   cancelWireDrawing: () => void;
   setMousePosition: (pos: Point) => void;
   pushHistory: () => void;
+  clearHistory: () => void;
+  triggerFocus: (ids: string[]) => void;
   undo: () => void;
   redo: () => void;
   loadProject: (components: CircuitComponent[], wires: Wire[], viewport: { scale: number; x: number; y: number }) => void;
@@ -80,6 +83,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       mousePosition: { x: 0, y: 0 },
       history: [{ components: [], wires: [] }],
       historyIndex: 0,
+      focusTrigger: null,
       panMode: false,
 
       pushHistory: () => {
@@ -102,6 +106,15 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
           }
         });
       },
+
+      clearHistory: () => set({
+        history: [],
+        historyIndex: -1
+      }),
+
+      triggerFocus: (ids: string[]) => set({
+        focusTrigger: { ids, timestamp: Date.now() }
+      }),
 
       addComponent: (component) => {
         set((state) => {

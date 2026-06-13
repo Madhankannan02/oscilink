@@ -8,12 +8,14 @@ import { Toaster } from 'react-hot-toast';
 import { useState, useRef } from 'react';
 import { Toolbar } from './components/ui/Toolbar';
 import { SensorDistanceControl } from './components/ui/SensorDistanceControl';
+import { ErrorPanel } from './components/ui/ErrorPanel';
 
 function App() {
   useKeyboardShortcuts();
 
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
+  const [errorPanelOpen, setErrorPanelOpen] = useState(false);
   const editorRef = useRef<CodeEditorRef>(null);
 
   return (
@@ -22,6 +24,7 @@ function App() {
       <Toolbar 
         leftOpen={leftOpen} setLeftOpen={setLeftOpen} 
         rightOpen={rightOpen} setRightOpen={setRightOpen} 
+        errorPanelOpen={errorPanelOpen} setErrorPanelOpen={setErrorPanelOpen}
         editorRef={editorRef}
       />
 
@@ -57,6 +60,11 @@ function App() {
           </div>
         </div>
       </div>
+      
+      {/* Standalone Error Panel */}
+      {errorPanelOpen && (
+        <ErrorPanel onClose={() => setErrorPanelOpen(false)} />
+      )}
       
       <SensorDistanceControl />
     </div>

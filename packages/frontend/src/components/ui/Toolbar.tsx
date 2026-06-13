@@ -6,6 +6,7 @@ import { useEditorStore } from '../../store/editorStore';
 import { useSimulationStore } from '../../store/simulationStore';
 import { useWorkspaceStore } from '../../store/workspaceStore';
 import { CodeEditorRef } from '../editor/CodeEditor';
+import { AlertTriangle, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface ToolbarProps {
@@ -13,19 +14,28 @@ interface ToolbarProps {
   setLeftOpen: (open: boolean) => void;
   rightOpen: boolean;
   setRightOpen: (open: boolean) => void;
+  errorPanelOpen: boolean;
+  setErrorPanelOpen: (open: boolean) => void;
   editorRef: React.RefObject<CodeEditorRef>;
 }
 
-export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, editorRef }: ToolbarProps) {
+export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, errorPanelOpen, setErrorPanelOpen, editorRef }: ToolbarProps) {
   const { compile } = useCompiler();
   const simulation = useSimulation(); // Call this to ensure worker initializes
   const isCompiling = useEditorStore(state => state.isCompiling);
   const compilationErrors = useEditorStore(state => state.compilationErrors);
   const compiledHex = useEditorStore(state => state.compiledHex);
   const status = useSimulationStore(state => state.status);
+  const circuitErrors = useSimulationStore(state => state.circuitErrors);
+  const runtimeWarnings = useSimulationStore(state => state.runtimeWarnings);
 
   const errorCount = compilationErrors.length;
   const showCheckmark = status === 'COMPILED' && errorCount === 0;
+
+  // Calculate total diagnostics
+  const totalErrors = compilationErrors.length + circuitErrors.filter(e => e.severity === 'error').length;
+  const totalWarnings = runtimeWarnings.length + circuitErrors.filter(e => e.severity === 'warning').length;
+  const hasDiagnostics = totalErrors > 0 || totalWarnings > 0 || circuitErrors.length > 0;
 
   const handleRun = () => {
     if (!compiledHex) {
@@ -89,6 +99,20 @@ export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, editor
       )}
 
       <div className="flex items-center ml-auto gap-2 text-text-secondary">
+        {hasDiagnostics && (
+          <button 
+            onClick={() => setErrorPanelOpen(!errorPanelOpen)} 
+            className={`relative p-1.5 mr-2 rounded transition-colors ${errorPanelOpen ? 'bg-surface-hover text-primary' : 'hover:bg-surface-hover'}`}
+            title="Toggle Diagnostics Panel"
+          >
+            {totalErrors > 0 ? <AlertCircle size={18} className="text-red-500" /> : <AlertTriangle size={18} className="text-orange-500" />}
+            
+            <span className={`absolute -top-1.5 -right-1.5 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full ${totalErrors > 0 ? 'bg-red-500' : 'bg-orange-500'}`}>
+              {totalErrors > 0 ? totalErrors : totalWarnings > 0 ? totalWarnings : circuitErrors.length}
+            </span>
+          </button>
+        )}
+
         <button 
           onClick={() => setLeftOpen(!leftOpen)} 
           className={`p-1.5 rounded transition-colors ${leftOpen ? 'bg-surface-hover text-primary' : 'hover:bg-surface-hover'}`}

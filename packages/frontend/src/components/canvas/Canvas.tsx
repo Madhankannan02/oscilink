@@ -8,6 +8,7 @@ import { useWireDrawing } from '../../hooks/useWireDrawing';
 import { WireLayer } from './WireLayer';
 import { ComponentLayer } from './ComponentLayer';
 import { InteractionLayer } from './InteractionLayer';
+import { ErrorHighlightLayer } from './ErrorHighlightLayer';
 import { PinRef } from '../../types/components';
 import { PropertiesPanel } from '../ui/PropertiesPanel';
 
@@ -42,6 +43,7 @@ export const Canvas: React.FC<{ rightPanelOpen?: boolean }> = ({ rightPanelOpen 
   const redo = useWorkspaceStore((state) => state.redo);
   const history = useWorkspaceStore((state) => state.history);
   const historyIndex = useWorkspaceStore((state) => state.historyIndex);
+  const focusTrigger = useWorkspaceStore((state) => state.focusTrigger);
 
   const {
     previewWirePoints,
@@ -101,6 +103,46 @@ export const Canvas: React.FC<{ rightPanelOpen?: boolean }> = ({ rightPanelOpen 
       window.removeEventListener('keyup', handleKeyUp);
     };
   }, []);
+
+  // Handle focusTrigger to pan and zoom to specific components
+  useEffect(() => {
+    if (!focusTrigger || focusTrigger.ids.length === 0 || components.length === 0) return;
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    const targetComponents = components.filter(c => focusTrigger.ids.includes(c.id));
+    if (targetComponents.length === 0) return;
+
+    targetComponents.forEach(c => {
+      // rough approximation of bounds since we don't have getComponentBounds here, but position is close enough for center
+      if (c.position.x < minX) minX = c.position.x;
+      if (c.position.y < minY) minY = c.position.y;
+      if (c.position.x > maxX) maxX = c.position.x;
+      if (c.position.y > maxY) maxY = c.position.y;
+    });
+
+    const padding = 150;
+    const compWidth = 100;
+    const compHeight = 100;
+    
+    const width = (maxX - minX) + compWidth;
+    const height = (maxY - minY) + compHeight;
+
+    const scaleX = dimensions.width / (width + padding * 2);
+    const scaleY = dimensions.height / (height + padding * 2);
+    let newScale = Math.min(scaleX, scaleY);
+    newScale = Math.max(0.5, Math.min(newScale, 2.0)); // Don't zoom in crazy far
+
+    const centerX = minX + (maxX - minX) / 2 + compWidth / 2;
+    const centerY = minY + (maxY - minY) / 2 + compHeight / 2;
+
+    const newX = dimensions.width / 2 - centerX * newScale;
+    const newY = dimensions.height / 2 - centerY * newScale;
+
+    // TODO: Smooth animation would be nice, but instant setViewport is fine for now
+    setViewport({ scale: newScale, x: newX, y: newY });
+    
+  }, [focusTrigger, dimensions.width, dimensions.height, setViewport]);
 
   const handleWheel = useCallback((e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
@@ -271,6 +313,9 @@ export const Canvas: React.FC<{ rightPanelOpen?: boolean }> = ({ rightPanelOpen 
           }}>
             {/* Layer 2: Component layer */}
             <ComponentLayer />
+
+            {/* Layer 2.5: Error Highlights */}
+            <ErrorHighlightLayer />
 
             {/* Layer 3: Wire layer */}
             <Layer x={viewport.x} y={viewport.y} scaleX={viewport.scale} scaleY={viewport.scale}>
