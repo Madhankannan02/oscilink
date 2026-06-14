@@ -19,6 +19,7 @@ interface EditorState {
   compiledHex: string | null;
   compilationErrors: CompilationError[];
   compilationWarnings: CompilationError[];
+  staticErrors: CompilationError[];
   isCompiling: boolean;
   lastCompileTime: number | null;
   lastCompiledCode: string | null;
@@ -30,6 +31,7 @@ interface EditorActions {
   setCompiledHex: (hex: string | null) => void;
   setCompilationErrors: (errors: CompilationError[]) => void;
   setCompilationWarnings: (warnings: CompilationError[]) => void;
+  setStaticErrors: (errors: CompilationError[]) => void;
   setIsCompiling: (isCompiling: boolean) => void;
   setLastCompileTime: (time: number | null) => void;
   setLastCompiledCode: (code: string | null) => void;
@@ -46,6 +48,7 @@ export const useEditorStore = create<EditorStore>()(
       compiledHex: null,
       compilationErrors: [],
       compilationWarnings: [],
+      staticErrors: [],
       isCompiling: false,
       lastCompileTime: null,
       lastCompiledCode: null,
@@ -55,6 +58,7 @@ export const useEditorStore = create<EditorStore>()(
       setCompiledHex: (hex) => set((state) => { state.compiledHex = hex; }),
       setCompilationErrors: (errors) => set((state) => { state.compilationErrors = errors; }),
       setCompilationWarnings: (warnings) => set((state) => { state.compilationWarnings = warnings; }),
+      setStaticErrors: (errors) => set((state) => { state.staticErrors = errors; }),
       setIsCompiling: (isCompiling) => set((state) => { state.isCompiling = isCompiling; }),
       setLastCompileTime: (time) => set((state) => { state.lastCompileTime = time; }),
       setLastCompiledCode: (code) => set((state) => { state.lastCompiledCode = code; }),

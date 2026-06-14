@@ -19,11 +19,7 @@ function useDebounce<T extends (...args: any[]) => void>(callback: T, delay: num
   }, [callback, delay]);
 }
 
-export interface CompilationError {
-  line: number;
-  column: number;
-  message: string;
-}
+import { CompilationError } from '../../types/simulation';
 
 export interface CodeEditorRef {
   displayCompilationErrors: (errors: CompilationError[]) => void;
@@ -46,6 +42,16 @@ export const CodeEditor = forwardRef<CodeEditorRef>((_props, ref) => {
     if (!model) return;
 
     const issues = analyzeCode(currentCode);
+    const setStaticErrors = useEditorStore.getState().setStaticErrors;
+
+    // Save to store for the Toolbar and ErrorPanel
+    setStaticErrors(issues.map(i => ({
+      line: i.line,
+      column: i.column,
+      message: i.message,
+      severity: i.severity === 'info' ? 'warning' : i.severity, // Map info to warning
+      hint: i.hint
+    })));
 
     const markers = issues.map(err => {
       let severity = monacoRef.current!.MarkerSeverity.Error;

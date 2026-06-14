@@ -24,6 +24,7 @@ export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, errorP
   const simulation = useSimulation(); // Call this to ensure worker initializes
   const isCompiling = useEditorStore(state => state.isCompiling);
   const compilationErrors = useEditorStore(state => state.compilationErrors);
+  const staticErrors = useEditorStore(state => state.staticErrors);
   const compiledHex = useEditorStore(state => state.compiledHex);
   const status = useSimulationStore(state => state.status);
   const circuitErrors = useSimulationStore(state => state.circuitErrors);
@@ -33,8 +34,11 @@ export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, errorP
   const showCheckmark = status === 'COMPILED' && errorCount === 0;
 
   // Calculate total diagnostics
-  const totalErrors = compilationErrors.length + circuitErrors.filter(e => e.severity === 'error').length;
-  const totalWarnings = runtimeWarnings.length + circuitErrors.filter(e => e.severity === 'warning').length;
+  const staticErrorCount = staticErrors.filter(e => e.severity === 'error').length;
+  const staticWarningCount = staticErrors.filter(e => e.severity === 'warning').length;
+
+  const totalErrors = compilationErrors.length + staticErrorCount + circuitErrors.filter(e => e.severity === 'error').length;
+  const totalWarnings = runtimeWarnings.length + staticWarningCount + circuitErrors.filter(e => e.severity === 'warning').length;
   const hasDiagnostics = totalErrors > 0 || totalWarnings > 0 || circuitErrors.length > 0;
 
   const handleRun = () => {

@@ -44,13 +44,13 @@ export const ErrorHighlightLayer: React.FC = () => {
         // Find nodes and update directly
         const layer = layerRef.current;
         const dashRects = layer.find('.error-dash');
-        dashRects.forEach(node => node.dashOffset(dashOffsetRef.current));
+        dashRects.forEach(node => (node as Konva.Shape).dashOffset(dashOffsetRef.current));
         
         const pulseRects = layer.find('.error-pulse');
-        pulseRects.forEach(node => node.opacity(pulseOpacityRef.current));
+        pulseRects.forEach(node => (node as Konva.Shape).opacity(pulseOpacityRef.current));
 
         const pulseLines = layer.find('.error-pulse-line');
-        pulseLines.forEach(node => node.opacity(pulseOpacityRef.current * 6));
+        pulseLines.forEach(node => (node as Konva.Shape).opacity(pulseOpacityRef.current * 6));
       }, layerRef.current);
       anim.start();
     }
@@ -69,7 +69,7 @@ export const ErrorHighlightLayer: React.FC = () => {
           anim.stop();
           focusPulseOpacityRef.current = 0;
           const focusRects = layerRef.current.find('.focus-flash');
-          focusRects.forEach(node => node.opacity(0));
+          focusRects.forEach(node => (node as Konva.Shape).opacity(0));
           return;
         }
         // Rapid oscillation + decay
@@ -78,7 +78,7 @@ export const ErrorHighlightLayer: React.FC = () => {
         focusPulseOpacityRef.current = flash * decay * 0.8;
         
         const focusRects = layerRef.current.find('.focus-flash');
-        focusRects.forEach(node => node.opacity(focusPulseOpacityRef.current));
+        focusRects.forEach(node => (node as Konva.Shape).opacity(focusPulseOpacityRef.current));
       }, layerRef.current);
       anim.start();
     }
@@ -87,7 +87,7 @@ export const ErrorHighlightLayer: React.FC = () => {
       focusPulseOpacityRef.current = 0;
       if (layerRef.current) {
         const focusRects = layerRef.current.find('.focus-flash');
-        focusRects.forEach(node => node.opacity(0));
+        focusRects.forEach(node => (node as Konva.Shape).opacity(0));
       }
     };
   }, [focusTrigger]);

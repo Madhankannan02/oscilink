@@ -13,13 +13,15 @@ export const ErrorPanel: React.FC<ErrorPanelProps> = ({ onClose }) => {
   const circuitErrors = useSimulationStore(state => state.circuitErrors);
   const runtimeWarnings = useSimulationStore(state => state.runtimeWarnings);
   const compilationErrors = useEditorStore(state => state.compilationErrors);
+  const staticErrors = useEditorStore(state => state.staticErrors);
   const triggerFocus = useWorkspaceStore(state => state.triggerFocus);
 
   const [circuitExpanded, setCircuitExpanded] = useState(true);
   const [compilerExpanded, setCompilerExpanded] = useState(true);
+  const [staticExpanded, setStaticExpanded] = useState(true);
   const [runtimeExpanded, setRuntimeExpanded] = useState(true);
 
-  if (circuitErrors.length === 0 && compilationErrors.length === 0 && runtimeWarnings.length === 0) {
+  if (circuitErrors.length === 0 && compilationErrors.length === 0 && runtimeWarnings.length === 0 && staticErrors.length === 0) {
     return null;
   }
 
@@ -139,6 +141,40 @@ export const ErrorPanel: React.FC<ErrorPanelProps> = ({ onClose }) => {
                 {compilationErrors.map((err, i) => (
                   <div key={i} className="text-sm text-red-400 font-mono bg-red-500/5 p-2 rounded border border-red-500/10 break-words">
                     <span className="font-bold text-red-300">Line {err.line}:</span> {err.message}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Static Analysis Errors Section */}
+        {staticErrors.length > 0 && (
+          <div className="border border-border rounded bg-background overflow-hidden">
+            <button 
+              className="w-full flex items-center justify-between p-2 hover:bg-surface transition-colors text-sm font-medium"
+              onClick={() => setStaticExpanded(!staticExpanded)}
+            >
+              <div className="flex items-center gap-2">
+                {staticExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                <span>Static Analysis</span>
+              </div>
+              <span className={`${staticErrors.some(e => e.severity === 'error') ? 'bg-red-500/20 text-red-400' : 'bg-orange-500/20 text-orange-400'} text-xs px-2 py-0.5 rounded-full`}>
+                {staticErrors.length}
+              </span>
+            </button>
+            
+            {staticExpanded && (
+              <div className="border-t border-border flex flex-col p-2 space-y-2">
+                {staticErrors.map((err, i) => (
+                  <div key={i} className={`text-sm ${err.severity === 'error' ? 'text-red-400 bg-red-500/5 border-red-500/10' : 'text-orange-400 bg-orange-500/5 border-orange-500/10'} p-2 rounded border break-words`}>
+                    <div className="flex items-start gap-2">
+                      {err.severity === 'error' ? <AlertCircle size={14} className="mt-0.5 flex-shrink-0" /> : <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />}
+                      <div className="flex-1">
+                        <p><span className="font-bold opacity-75">Line {err.line}:</span> {err.message}</p>
+                        {err.hint && <p className="text-xs italic opacity-70 mt-1">Tip: {err.hint}</p>}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
