@@ -17,6 +17,8 @@ export function analyzeCode(code: string): CodeIssue[] {
   let hasSerialBegin = false;
   let hasDelayInSetup = false;
   let hasDelayInLoop = false;
+  let serialPrintLine = 1;
+  let serialPrintCol = 1;
 
   let currentBlock = '';
 
@@ -35,10 +37,15 @@ export function analyzeCode(code: string): CodeIssue[] {
       currentBlock = 'loop';
     }
 
-    if (trim.indexOf('Serial.print') !== -1 || trim.indexOf('Serial.println') !== -1) {
+    let spIndex = line.indexOf('Serial.print');
+    if (spIndex !== -1) {
+      if (!hasSerialPrint) {
+        serialPrintLine = lineNum;
+        serialPrintCol = spIndex + 1;
+      }
       hasSerialPrint = true;
     }
-    if (trim.indexOf('Serial.begin') !== -1) {
+    if (line.indexOf('Serial.begin') !== -1) {
       hasSerialBegin = true;
     }
 
@@ -193,11 +200,11 @@ export function analyzeCode(code: string): CodeIssue[] {
   // CHECK SERIAL_WITHOUT_BEGIN
   if (hasSerialPrint && !hasSerialBegin) {
     issues.push({
-      line: 1,
-      column: 1,
+      line: serialPrintLine,
+      column: serialPrintCol,
       severity: 'warning',
       message: 'Serial.print used without Serial.begin.',
-      hint: 'Add Serial.begin(9600); inside setup().',
+      hint: 'Add Serial.begin(9600); inside setup() before using Serial.',
       code: 'SERIAL_WITHOUT_BEGIN'
     });
   }
