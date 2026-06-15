@@ -58,6 +58,15 @@ let simulatedDistanceCm = 50;
 // Track TRIG pin state per sensor component
 const trigState: Record<string, boolean> = {};
 
+// Runtime monitoring
+let simulationStartTime = 0;
+let lastActivityTime = 0;
+let stackWarningPosted = false;
+
+function registerActivity() {
+  lastActivityTime = performance.now();
+}
+
 // Queue for precise hardware pin toggles
 const scheduledPinToggles: Array<{
   cpuCycle: number;
@@ -146,6 +155,9 @@ function stopSimulation() {
   nextToggleCycle = Infinity;
   for (const key in pinHighTicks) delete pinHighTicks[key];
   for (const key in lcdControllers) delete lcdControllers[key];
+  simulationStartTime = 0;
+  lastActivityTime = 0;
+  stackWarningPosted = false;
 }
 
 
@@ -181,7 +193,24 @@ function simulationLoop() {
 
       avrInstruction(avrRunner.cpu);
       avrRunner.cpu.tick();
+
+      if (avrRunner.cpu.cycles % 2000 === 0 && !stackWarningPosted) {
+        const spl = avrRunner.cpu.data[0x5D];
+        const sph = avrRunner.cpu.data[0x5E];
+        const sp = (sph << 8) | spl;
+        const usedStack = 0x8FF - sp;
+        if (usedStack > 1800) {
+          stackWarningPosted = true;
+          postMessage({ type: 'WARNING', payload: { text: `Stack Overflow Risk: Used ${usedStack} bytes of stack memory.` } });
+        }
+      }
     }
+  }
+
+  // Check no activity timeout
+  if (now - lastActivityTime > 8000 && now - simulationStartTime > 5000) {
+    postMessage({ type: 'WARNING', payload: { text: 'No circuit activity detected for 8 seconds. The loop may lack output or be waiting for input.' } });
+    lastActivityTime = now; // Reset to fire again in 8s
   }
 
   flushUpdates();
@@ -203,6 +232,7 @@ function flushUpdates() {
 }
 
 function handlePinChange(pinName: string, voltage: number) {
+  registerActivity();
   // Always notify UI for Arduino visual pins
   postMessage({ type: 'PIN_CHANGE', payload: { componentId: 'arduino-uno', pinId: pinName, voltage } });
 
@@ -478,6 +508,7 @@ function initializeSimulation(hex: string, graphData: any) {
 
     // SERIAL UART SETUP
     avrRunner.usart.onByteTransmit = (value: number) => {
+      registerActivity();
       serialBuffer += String.fromCharCode(value);
       if (value === 10 || serialBuffer.length >= 128) {
         postMessage({ type: 'SERIAL_OUTPUT', payload: { text: serialBuffer } });
@@ -505,6 +536,17 @@ function initializeSimulation(hex: string, graphData: any) {
     // OCR2B (0xB4) -> D3, TCCR2A (0xB0) bit 5
     attachPWMHook(0xB4, 'D3', 0x20, 0xB0);
 
+    // ADMUX Invalid Channel Check (0x7C)
+    const origAdmuxHook = avrRunner.cpu.writeHooks[0x7C];
+    avrRunner.cpu.writeHooks[0x7C] = (value: number, oldValue: number, addrArgs: number, mask: number) => {
+      const channel = value & 0x0F; // actually lower 4 bits are MUX3:0. For ATmega328P, MUX3=0 means ADC0-7. Let's just check lower 3 bits.
+      const ch = value & 0x07;
+      if (ch > 5) {
+        postMessage({ type: 'WARNING', payload: { text: `Invalid analog channel selected: A${ch}. Valid channels are A0-A5.` } });
+      }
+      return origAdmuxHook ? origAdmuxHook(value, oldValue, addrArgs, mask) : false;
+    };
+
     lastHex = hex;
     lastGraphData = graphData;
 
@@ -526,6 +568,10 @@ self.onmessage = function (e) {
       if (simulationLoopTimer) clearTimeout(simulationLoopTimer);
       isRunning = true;
       lastTickTime = performance.now();
+      if (!simulationStartTime) {
+        simulationStartTime = lastTickTime;
+        lastActivityTime = lastTickTime;
+      }
       simulationLoop();
       postMessage({ type: 'STATUS', value: 'RUNNING' });
       break;
@@ -584,11 +630,13 @@ self.onmessage = function (e) {
         const channel = parseInt(payload.pinId.substring(1), 10);
         if (!isNaN(channel)) {
           setAnalogInputVoltage(channel, payload.value);
+          registerActivity();
         }
       }
       break;
 
     case 'SERIAL_INPUT':
+      registerActivity();
       if (avrRunner) {
         for (let i = 0; i < payload.text.length; i++) {
           avrRunner.usart.writeByte(payload.text.charCodeAt(i));

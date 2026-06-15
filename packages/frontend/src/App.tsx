@@ -2,8 +2,8 @@ import { Canvas } from './components/canvas/Canvas';
 import { ComponentPalette } from './components/ui/ComponentPalette';
 import { WireColorPicker } from './components/ui/WireColorPicker';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { CodeEditor, CodeEditorRef } from './components/editor/CodeEditor';
-import { BottomPanel } from './components/editor/BottomPanel';
+import { CodeEditorRef } from './components/editor/CodeEditor';
+import { RightPanel } from './components/RightPanel';
 import { Toaster } from 'react-hot-toast';
 import { useState, useRef } from 'react';
 import { Toolbar } from './components/ui/Toolbar';
@@ -46,17 +46,7 @@ function App() {
         {/* Right Panel (Code Editor + Properties/Inspector) */}
         <div className={`absolute top-0 bottom-0 right-0 z-10 overflow-hidden transition-all duration-300 ease-in-out ${rightOpen ? 'w-[450px]' : 'w-0'}`}>
           <div className="w-[450px] h-full absolute top-0 left-0 shadow-[-4px_0_24px_rgba(0,0,0,0.06)]">
-            <aside className="w-[450px] h-full bg-surface border-l border-border flex flex-col">
-              {/* Top Portion: Code Editor */}
-              <div className="flex-1 flex flex-col min-h-[300px]">
-                <CodeEditor ref={editorRef} />
-              </div>
-              
-              {/* Bottom Portion: Tabs (Problems & Serial Monitor) */}
-              <div className="h-[250px] min-h-[200px] flex flex-col">
-                <BottomPanel />
-              </div>
-            </aside>
+            <RightPanel editorRef={editorRef} />
           </div>
         </div>
       </div>

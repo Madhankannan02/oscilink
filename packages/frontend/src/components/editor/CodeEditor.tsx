@@ -25,6 +25,7 @@ export interface CodeEditorRef {
   displayCompilationErrors: (errors: CompilationError[]) => void;
   displayStaticErrors: (errors: CompilationError[]) => void;
   clearErrors: () => void;
+  jumpToLine: (line: number) => void;
 }
 
 export const CodeEditor = forwardRef<CodeEditorRef>((_props, ref) => {
@@ -302,11 +303,20 @@ export const CodeEditor = forwardRef<CodeEditorRef>((_props, ref) => {
       monacoRef.current.editor.setModelMarkers(model, 'arduino-static', markers);
     },
     clearErrors: () => {
-      if (!monacoRef.current || !editorRef.current) return;
-      const model = editorRef.current.getModel();
-      if (!model) return;
-      monacoRef.current.editor.setModelMarkers(model, 'arduino-compiler', []);
-      monacoRef.current.editor.setModelMarkers(model, 'arduino-static', []);
+      if (editorRef.current && monacoRef.current) {
+        const model = editorRef.current.getModel();
+        if (model) {
+          monacoRef.current.editor.setModelMarkers(model, 'arduino-compiler', []);
+          monacoRef.current.editor.setModelMarkers(model, 'arduino-static', []);
+        }
+      }
+    },
+    jumpToLine: (line: number) => {
+      if (editorRef.current) {
+        editorRef.current.revealLineInCenter(line);
+        editorRef.current.setPosition({ lineNumber: line, column: 1 });
+        editorRef.current.focus();
+      }
     }
   }));
 
