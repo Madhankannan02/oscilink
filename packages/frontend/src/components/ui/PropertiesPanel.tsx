@@ -3,7 +3,7 @@ import { useWorkspaceStore } from '../../store/workspaceStore';
 import { useSimulationStore } from '../../store/simulationStore';
 import { CircuitComponent, Wire } from '../../types/components';
 import { 
-  Copy, Trash2, Combine, Cpu, Settings, Activity, Link2, 
+  Copy, Trash2, Cpu, Settings, Activity, Link2, 
   ChevronUp, ChevronDown 
 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -39,7 +39,7 @@ export const PropertiesPanel: React.FC<{ rightPanelOpen?: boolean }> = ({ rightP
       style={{ right: rightPosition }}
     >
       {selectedComponentIds.length > 1 ? (
-        <MultipleSelectionContent count={selectedComponentIds.length} deleteSelected={deleteSelected} />
+        <MultipleSelectionContent count={selectedComponentIds.length} deleteSelected={deleteSelected} duplicateSelected={duplicateSelected} />
       ) : selectedComponentIds.length === 1 ? (
         <SingleSelectionContent 
           selectedComponent={components.find(c => c.id === selectedComponentIds[0])}
@@ -62,13 +62,16 @@ export const PropertiesPanel: React.FC<{ rightPanelOpen?: boolean }> = ({ rightP
   );
 };
 
-const MultipleSelectionContent = ({ count, deleteSelected }: { count: number, deleteSelected: () => void }) => (
+const MultipleSelectionContent = ({ count, deleteSelected, duplicateSelected }: { count: number, deleteSelected: () => void, duplicateSelected: () => void }) => (
   <div className="p-4">
     <h3 className="font-semibold text-lg text-text mb-4">Multiple Selection</h3>
     <p className="text-sm text-text-secondary mb-6">{count} components selected</p>
     <div className="flex flex-col gap-2">
-      <button className="flex items-center justify-center gap-2 w-full py-2 bg-surface-hover hover:bg-surface-active rounded border border-border text-sm text-text transition-colors">
-        <Combine className="w-4 h-4" /> Group (Visual Only)
+      <button 
+        onClick={duplicateSelected}
+        className="flex items-center justify-center gap-2 w-full py-2 bg-surface-hover hover:bg-surface-active rounded border border-border text-sm text-text transition-colors"
+      >
+        <Copy className="w-4 h-4" /> Duplicate Selected
       </button>
       <button 
         onClick={deleteSelected}

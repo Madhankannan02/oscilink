@@ -15,7 +15,7 @@ import {
   adcConfig
 } from 'avr8js';
 
-import { CircuitGraph, calculateLEDState, calculateBuzzerState, calculateServoState, calculateRelayState } from './engine/CircuitGraph';
+import { CircuitGraph, calculateLEDState, calculateBuzzerState, calculateServoState, calculateRelayState, calculateResistorState } from './engine/CircuitGraph';
 import { HD44780 } from './engine/HD44780';
 
 class AVRRunner {
@@ -344,6 +344,9 @@ function handlePinChange(pinName: string, voltage: number) {
       for (const [id, comp] of circuitGraph.components.entries()) {
         if (comp.type === 'LED') {
           const state = calculateLEDState(comp, circuitGraph);
+          queueComponentUpdate(id, state);
+        } else if (comp.type === 'RESISTOR') {
+          const state = calculateResistorState(comp, circuitGraph);
           queueComponentUpdate(id, state);
         } else if (comp.type === 'BUZZER') {
           const state = calculateBuzzerState(comp, circuitGraph);

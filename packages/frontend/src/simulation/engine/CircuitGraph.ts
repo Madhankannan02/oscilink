@@ -42,7 +42,7 @@ export interface GraphWire {
 export interface LEDState {
   isOn: boolean;
   brightness: number;
-  current: number;
+  currentMa: number;
 }
 
 export interface ServoState {
@@ -53,6 +53,12 @@ export interface ServoState {
 export interface BuzzerState {
   isActive: boolean;
   frequency?: number;
+}
+
+export interface ResistorState {
+  voltageDrop: number;
+  currentMa: number;
+  powerMw: number;
 }
 
 export class CircuitGraph {
@@ -492,7 +498,7 @@ export function calculateLEDState(ledComponent: GraphComponent, graph: CircuitGr
     isOn = brightness > 0;
   }
 
-  return { isOn, brightness, current };
+  return { isOn, brightness, currentMa: current };
 }
 
 export interface RelayState {
@@ -539,4 +545,54 @@ export function calculateBuzzerState(buzzerComponent: GraphComponent, graph: Cir
   const isActive = (vPositive - vNegative) > 2.0;
   
   return { isActive, frequency: buzzerComponent.properties?.frequency || 440 };
+}
+
+export function calculateResistorState(resistorComponent: GraphComponent, graph: CircuitGraph): ResistorState {
+  const pin1Id = `${resistorComponent.id}.PIN_1`;
+  const pin2Id = `${resistorComponent.id}.PIN_2`;
+  
+  const resistance = resistorComponent.properties?.resistance || 220;
+  
+  const connectedComps = [
+    ...graph.getConnectedComponents(resistorComponent.id, 'PIN_1'),
+    ...graph.getConnectedComponents(resistorComponent.id, 'PIN_2')
+  ];
+  
+  let currentMa = 0;
+  let voltageDrop = 0;
+  let ledFound = false;
+
+  for (const comp of connectedComps) {
+    if (comp.type === 'LED') {
+      const ledState = calculateLEDState(comp, graph);
+      if (ledState.isOn) {
+        currentMa = ledState.currentMa;
+        voltageDrop = (currentMa / 1000) * resistance;
+        ledFound = true;
+        break;
+      }
+    }
+  }
+
+  if (!ledFound) {
+    const v1Max = graph.getMaxConnectedVoltage(pin1Id);
+    const v1Min = graph.getMinConnectedVoltage(pin1Id);
+    const v2Max = graph.getMaxConnectedVoltage(pin2Id);
+    const v2Min = graph.getMinConnectedVoltage(pin2Id);
+    
+    const vHigh = Math.max(v1Max, v2Max);
+    const vLow = Math.min(v1Min, v2Min);
+    
+    const hasGround = graph.hasPathToGround(pin1Id) || graph.hasPathToGround(pin2Id) || vLow === 0;
+    const hasPower = graph.hasPathToPower(pin1Id) || graph.hasPathToPower(pin2Id) || vHigh > 0;
+    
+    if (hasGround && hasPower) {
+      voltageDrop = vHigh - vLow;
+      currentMa = (voltageDrop / resistance) * 1000;
+    }
+  }
+
+  const powerMw = voltageDrop * currentMa;
+  
+  return { voltageDrop, currentMa, powerMw };
 }
