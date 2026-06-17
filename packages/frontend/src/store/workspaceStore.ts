@@ -466,7 +466,6 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
         graph.buildFromCircuitState(mappedComponents as any, mappedWires);
         const oldErrors = useSimulationStore.getState().circuitErrors;
         const errors = validateCircuit(state.components, state.wires, graph);
-        console.log('[Validator] Executed all rules. Errors found:', errors);
         
         const isRunning = useSimulationStore.getState().status === 'RUNNING';
         

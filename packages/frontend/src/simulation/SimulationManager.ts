@@ -117,14 +117,12 @@ class SimulationManager {
         }
         break;
       case 'PIN_CHANGE':
-        console.log('PIN_CHANGE received!', payload);
         if (store.setPinVoltage) {
           let compId = payload.componentId;
           if (compId === 'arduino-uno') {
             const arduino = useWorkspaceStore.getState().components.find(c => c.type === 'ARDUINO_UNO');
             if (arduino) compId = arduino.id;
           }
-          console.log('Mapping to component ID:', compId);
           store.setPinVoltage(`${compId}-${payload.pinId}`, payload.voltage);
         }
         break;

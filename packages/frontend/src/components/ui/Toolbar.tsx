@@ -8,6 +8,7 @@ import { useWorkspaceStore } from '../../store/workspaceStore';
 import { CodeEditorRef } from '../editor/CodeEditor';
 import { AlertTriangle, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { FileMenu } from './FileMenu';
 
 interface ToolbarProps {
   leftOpen: boolean;
@@ -54,6 +55,7 @@ export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, errorP
   return (
     <header className="h-[52px] min-h-[52px] bg-surface border-b border-border flex items-center px-4 gap-4">
       <h1 className="text-lg font-semibold text-primary">Oscilink</h1>
+      <FileMenu />
       <div className="h-6 w-px bg-border mx-2" />
       <UndoRedoButtons />
       

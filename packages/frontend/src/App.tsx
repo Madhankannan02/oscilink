@@ -4,14 +4,54 @@ import { WireColorPicker } from './components/ui/WireColorPicker';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { CodeEditorRef } from './components/editor/CodeEditor';
 import { RightPanel } from './components/RightPanel';
-import { Toaster } from 'react-hot-toast';
-import { useState, useRef } from 'react';
+import { Toaster, toast } from 'react-hot-toast';
+import { useState, useRef, useEffect } from 'react';
 import { Toolbar } from './components/ui/Toolbar';
 import { SensorDistanceControl } from './components/ui/SensorDistanceControl';
 import { ErrorPanel } from './components/ui/ErrorPanel';
+import { setupAutoSave, deserializeProject } from './utils/projectSerializer';
 
 function App() {
   useKeyboardShortcuts();
+
+  useEffect(() => {
+    setupAutoSave();
+
+    const savedTime = localStorage.getItem('arduino-sim-autosave-time');
+    if (savedTime) {
+      const timeMs = parseInt(savedTime, 10);
+      const sevenDays = 7 * 24 * 60 * 60 * 1000;
+      if (Date.now() - timeMs < sevenDays) {
+        toast((t) => (
+          <div className="flex flex-col gap-2">
+            <span className="font-semibold text-sm">An auto-saved project was found.</span>
+            <div className="flex gap-2 justify-end mt-1">
+              <button
+                onClick={() => toast.dismiss(t.id)}
+                className="px-3 py-1 text-xs bg-surface-hover rounded text-text-secondary hover:text-text transition-colors"
+              >
+                Dismiss
+              </button>
+              <button
+                onClick={() => {
+                  try {
+                    const data = JSON.parse(localStorage.getItem('arduino-sim-autosave') || '{}');
+                    deserializeProject(data);
+                    toast.dismiss(t.id);
+                  } catch (e) {
+                    toast.error('Failed to restore auto-save');
+                  }
+                }}
+                className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors font-medium"
+              >
+                Restore
+              </button>
+            </div>
+          </div>
+        ), { duration: 15000, id: 'autosave-toast' });
+      }
+    }
+  }, []);
 
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);

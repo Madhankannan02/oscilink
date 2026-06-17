@@ -97,13 +97,7 @@ export const useKeyboardShortcuts = () => {
       // Ctrl+S (Save)
       if (e.ctrlKey && e.key.toLowerCase() === 's') {
         e.preventDefault();
-        const projectData = { 
-          components: state.components, 
-          wires: state.wires, 
-          viewport: state.viewport 
-        };
-        localStorage.setItem('arduino-sim-current', JSON.stringify(projectData));
-        alert('Project saved successfully!'); // Optional: Replace with a toast if you have one
+        document.dispatchEvent(new CustomEvent('open-save-modal'));
         return;
       }
 
