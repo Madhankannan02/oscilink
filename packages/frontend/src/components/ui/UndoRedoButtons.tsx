@@ -40,7 +40,7 @@ export const UndoRedoButtons: React.FC = () => {
         onClick={undo}
         disabled={!canUndo}
         className={`p-1.5 rounded flex items-center justify-center transition-colors
-          ${!canUndo ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-hover text-text-secondary hover:text-text'}
+          ${!canUndo ? 'opacity-40 cursor-not-allowed text-text-secondary' : 'hover:bg-surface-hover text-text'}
           ${flashUndo ? 'bg-blue-500/20 text-blue-500' : ''}
         `}
         title="Undo (Ctrl+Z)"
@@ -52,7 +52,7 @@ export const UndoRedoButtons: React.FC = () => {
         onClick={redo}
         disabled={!canRedo}
         className={`p-1.5 rounded flex items-center justify-center transition-colors
-          ${!canRedo ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-hover text-text-secondary hover:text-text'}
+          ${!canRedo ? 'opacity-40 cursor-not-allowed text-text-secondary' : 'hover:bg-surface-hover text-text'}
           ${flashRedo ? 'bg-blue-500/20 text-blue-500' : ''}
         `}
         title="Redo (Ctrl+Y or Ctrl+Shift+Z)"
