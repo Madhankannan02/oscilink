@@ -21,12 +21,17 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
 
   const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = React.useContext(CanvasContext);
 
-  const selectedComponentIds = useWorkspaceStore((state) => state.selectedComponentIds);
-  const isSelected = selectedComponentIds.includes(component.id);
   const status = useSimulationStore((state) => state.status);
   
   const handleDragStart = () => {
     useWorkspaceStore.getState().pushHistory();
+  };
+
+  const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
+    useWorkspaceStore.getState().updateComponentPosition(component.id, {
+      x: e.target.x(),
+      y: e.target.y()
+    });
   };
 
   const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
@@ -132,17 +137,12 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
       rotation={component.rotation}
       draggable
       onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
       onClick={handleClick}
       onTap={handleClick}
     >
-      {isSelected && (
-        <Rect
-          x={-5} y={-5} width={50} height={50}
-          stroke="#3b82f6" strokeWidth={2} dash={[6, 3]}
-          listening={false}
-        />
-      )}
+      <Rect x={-5} y={-5} width={50} height={50} fill="transparent" />
 
       {/* Leads */}
       <Group listening={false}>
