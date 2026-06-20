@@ -41,6 +41,7 @@ interface WorkspaceActions {
   addComponent: (component: CircuitComponent) => void;
   removeComponent: (id: string) => void;
   updateComponentPosition: (id: string, position: Point) => void;
+  moveSelectedComponents: (draggedId: string, newX: number, newY: number) => void;
   updateComponentProperties: (id: string, properties: Partial<ComponentProperties>) => void;
   updateComponentRotation: (id: string, rotation: number) => void;
   addWire: (wire: Wire) => void;
@@ -160,6 +161,48 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
               }
             });
           }
+        });
+      },
+
+      moveSelectedComponents: (draggedId, newX, newY) => {
+        set((state) => {
+          const draggedComp = state.components.find(c => c.id === draggedId);
+          if (!draggedComp) return;
+
+          const dx = newX - draggedComp.position.x;
+          const dy = newY - draggedComp.position.y;
+          if (dx === 0 && dy === 0) return;
+
+          const isSelected = state.selectedComponentIds.includes(draggedId);
+          const idsToMove = isSelected ? state.selectedComponentIds : [draggedId];
+
+          idsToMove.forEach(id => {
+            const comp = state.components.find(c => c.id === id);
+            if (comp) {
+              comp.position.x += dx;
+              comp.position.y += dy;
+
+              state.wires.forEach(wire => {
+                if (wire.from.componentId === id) {
+                  const pin = comp.pins[wire.from.pinId];
+                  if (pin) {
+                    const absPos = getAbsolutePinPosition(comp, pin);
+                    wire.points[0] = absPos.x;
+                    wire.points[1] = absPos.y;
+                  }
+                }
+                if (wire.to.componentId === id) {
+                  const pin = comp.pins[wire.to.pinId];
+                  if (pin) {
+                    const len = wire.points.length;
+                    const absPos = getAbsolutePinPosition(comp, pin);
+                    wire.points[len - 2] = absPos.x;
+                    wire.points[len - 1] = absPos.y;
+                  }
+                }
+              });
+            }
+          });
         });
       },
 

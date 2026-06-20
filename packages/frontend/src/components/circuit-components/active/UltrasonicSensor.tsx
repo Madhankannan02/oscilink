@@ -20,17 +20,11 @@ export const UltrasonicSensor: React.FC<UltrasonicSensorProps> = ({ component })
   };
 
   const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
-    useWorkspaceStore.getState().updateComponentPosition(component.id, {
-      x: e.target.x(),
-      y: e.target.y()
-    });
+    useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
   };
 
   const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
-    useWorkspaceStore.getState().updateComponentPosition(component.id, {
-      x: e.target.x(),
-      y: e.target.y()
-    });
+    useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
   };
 
   const handleClick = (e: KonvaEventObject<MouseEvent>) => {
