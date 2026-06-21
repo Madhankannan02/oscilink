@@ -104,8 +104,6 @@ export const Breadboard: React.FC<BreadboardProps> = ({ component }) => {
     e.cancelBubble = true;
     handlePinMouseDown({ componentId: component.id, pinId });
   };
-  
-  // Pin renderer is replaced by an overlay and highlight circles
 
   return (
     <Group
@@ -122,39 +120,39 @@ export const Breadboard: React.FC<BreadboardProps> = ({ component }) => {
     >
       {/* Main board background */}
       <Rect
-        width={320} height={180}
+        width={330} height={180}
         fill="#f5f0e8"
         stroke="#d4c9b0" strokeWidth={1}
         cornerRadius={4}
       />
       
       {/* TOP POSITIVE RAIL */}
-      <Rect x={8} y={3} width={304} height={4}
+      <Rect x={8} y={3} width={314} height={4}
         fill={topPosV > 0 ? '#fca5a5' : '#fee2e2'} />
-      <Line points={[24, 5, 312, 5]}
+      <Line points={[24, 5, 322, 5]}
         stroke="#dc2626" strokeWidth={0.5} />
       <Text x={14} y={1} text="+" fontSize={8}
         fill="#dc2626" fontStyle="bold" />
       {topPosV > 0 && (
-        <Text x={295} y={2} text={`${topPosV}V`}
+        <Text x={305} y={2} text={`${topPosV}V`}
           fontSize={5} fill="#dc2626" fontStyle="bold" />
       )}
       
       {/* TOP NEGATIVE RAIL */}
-      <Rect x={8} y={25} width={304} height={4}
+      <Rect x={8} y={13} width={314} height={4}
         fill={topNegV === 0 ? '#eff6ff' : '#eff6ff'} />
-      <Line points={[24, 27, 312, 27]}
+      <Line points={[24, 15, 322, 15]}
         stroke="#2563eb" strokeWidth={0.5} />
-      <Text x={14} y={23} text="−" fontSize={8}
+      <Text x={14} y={11} text="−" fontSize={8}
         fill="#2563eb" fontStyle="bold" />
       
       {/* SEPARATOR LINE 1 */}
-      <Line points={[8, 32, 312, 32]}
+      <Line points={[8, 30, 322, 30]}
         stroke="#d4c9b0" strokeWidth={1} />
       
       {/* ROW LABELS LEFT SIDE */}
       {['a','b','c','d','e'].map((letter, i) => (
-        <Text key={letter} x={10} y={35 + i * 10}
+        <Text key={letter} x={10} y={37 + i * 10}
           text={letter} fontSize={5} fill="#9ca3af" />
       ))}
       {['f','g','h','i','j'].map((letter, i) => (
@@ -166,7 +164,7 @@ export const Breadboard: React.FC<BreadboardProps> = ({ component }) => {
       {[0, 4, 9, 14, 19, 24, 29].map(colIndex => (
         <Text
           key={colIndex}
-          x={18 + colIndex * 10 - 3}
+          x={20 + colIndex * 10 - 3}
           y={31}
           text={String(colIndex + 1)}
           fontSize={4} fill="#9ca3af"
@@ -174,33 +172,33 @@ export const Breadboard: React.FC<BreadboardProps> = ({ component }) => {
       ))}
       
       {/* CENTER GAP */}
-      <Rect x={0} y={80} width={320} height={16}
+      <Rect x={0} y={85} width={330} height={10}
         fill="#e8e0d0" />
-      <Line points={[8, 88, 312, 88]}
+      <Line points={[8, 90, 322, 90]}
         stroke="#c8bda8" strokeWidth={1} dash={[4, 4]} />
       
       {/* SEPARATOR LINE 2 */}
-      <Line points={[8, 148, 312, 148]}
+      <Line points={[8, 150, 322, 150]}
         stroke="#d4c9b0" strokeWidth={1} />
       
       {/* BOTTOM POSITIVE RAIL */}
-      <Rect x={8} y={149} width={304} height={4}
+      <Rect x={8} y={153} width={314} height={4}
         fill={bottomPosV > 0 ? '#fca5a5' : '#fee2e2'} />
-      <Line points={[24, 151, 312, 151]}
+      <Line points={[24, 155, 322, 155]}
         stroke="#dc2626" strokeWidth={0.5} />
-      <Text x={14} y={147} text="+" fontSize={8}
+      <Text x={14} y={151} text="+" fontSize={8}
         fill="#dc2626" fontStyle="bold" />
       {bottomPosV > 0 && (
-        <Text x={295} y={148} text={`${bottomPosV}V`}
+        <Text x={305} y={152} text={`${bottomPosV}V`}
           fontSize={5} fill="#dc2626" fontStyle="bold" />
       )}
       
       {/* BOTTOM NEGATIVE RAIL */}
-      <Rect x={8} y={171} width={304} height={4}
+      <Rect x={8} y={163} width={314} height={4}
         fill={bottomNegV === 0 ? '#eff6ff' : '#eff6ff'} />
-      <Line points={[24, 173, 312, 173]}
+      <Line points={[24, 165, 322, 165]}
         stroke="#2563eb" strokeWidth={0.5} />
-      <Text x={14} y={169} text="−" fontSize={8}
+      <Text x={14} y={161} text="−" fontSize={8}
         fill="#2563eb" fontStyle="bold" />
       
       {/* ALL HOLES — rendered via single Shape for performance */}
@@ -259,7 +257,7 @@ export const Breadboard: React.FC<BreadboardProps> = ({ component }) => {
 
       {/* HIT OVERLAY */}
       <Rect
-        x={0} y={0} width={320} height={180}
+        x={0} y={0} width={330} height={180}
         fill="rgba(0,0,0,0.001)"
         onMouseMove={(e) => {
           e.cancelBubble = true;

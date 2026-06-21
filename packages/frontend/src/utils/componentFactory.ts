@@ -28,7 +28,7 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
       // 32 exact pins based on true visual alignment with black header boxes
       const sx = 200 / 780;
       const sy = 140 / 540;
-      
+
       const createPinVoltage = (pinId: string, label: string, pType: PinType, direction: PinDirection, pos: Point, voltage = 0): Pin => ({
         id: pinId,
         label,
@@ -136,8 +136,10 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
     }
 
     case 'PUSH_BUTTON': {
-      pins['PIN_IN'] = createPin('PIN_IN', 'IN', 'digital', 'bidirectional', { x: 0, y: 20 });
-      pins['PIN_OUT'] = createPin('PIN_OUT', 'OUT', 'digital', 'bidirectional', { x: 40, y: 20 });
+      pins['PIN_1A'] = createPin('PIN_1A', '1A', 'digital', 'bidirectional', { x: 0, y: 12 });
+      pins['PIN_1B'] = createPin('PIN_1B', '1B', 'digital', 'bidirectional', { x: 40, y: 12 });
+      pins['PIN_2A'] = createPin('PIN_2A', '2A', 'digital', 'bidirectional', { x: 0, y: 28 });
+      pins['PIN_2B'] = createPin('PIN_2B', '2B', 'digital', 'bidirectional', { x: 40, y: 28 });
       properties = { pullup: false };
       break;
     }
@@ -227,7 +229,7 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
       pins['IN'] = createPin('IN', 'S', 'digital', 'input', { x: 5, y: 62 });
       pins['VCC'] = createPin('VCC', 'VCC', 'power', 'input', { x: 15, y: 62 });
       pins['GND'] = createPin('GND', '-', 'ground', 'input', { x: 25, y: 62 });
-      
+
       properties = { triggerVoltage: 5 };
       break;
     }
@@ -235,19 +237,19 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
     case 'BREADBOARD': {
       // Top power rail holes
       for (let col = 0; col < 30; col++) {
-        const x = 18 + col * 10;
+        const x = 20 + col * 10;
         pins[`TP_${col}`] = createPin(`TP_${col}`, 'TP', 'power', 'bidirectional', { x, y: 10 });
-        pins[`TN_${col}`] = createPin(`TN_${col}`, 'TN', 'ground', 'bidirectional', { x, y: 22 });
+        pins[`TN_${col}`] = createPin(`TN_${col}`, 'TN', 'ground', 'bidirectional', { x, y: 20 });
       }
 
       // Top main grid holes
       const topRowLabels = ['A', 'B', 'C', 'D', 'E'];
-      const topRowYs = [38, 48, 58, 68, 78];
+      const topRowYs = [40, 50, 60, 70, 80];
       topRowYs.forEach((rowY, rIdx) => {
         const rowLabel = topRowLabels[rIdx];
         for (let col = 0; col < 30; col++) {
           const pinId = `T_${col}_${rowLabel}`;
-          pins[pinId] = createPin(pinId, pinId, 'digital', 'bidirectional', { x: 18 + col * 10, y: rowY });
+          pins[pinId] = createPin(pinId, pinId, 'digital', 'bidirectional', { x: 20 + col * 10, y: rowY });
         }
       });
 
@@ -258,15 +260,15 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
         const rowLabel = bottomRowLabels[rIdx];
         for (let col = 0; col < 30; col++) {
           const pinId = `B_${col}_${rowLabel}`;
-          pins[pinId] = createPin(pinId, pinId, 'digital', 'bidirectional', { x: 18 + col * 10, y: rowY });
+          pins[pinId] = createPin(pinId, pinId, 'digital', 'bidirectional', { x: 20 + col * 10, y: rowY });
         }
       });
 
       // Bottom power rail holes
       for (let col = 0; col < 30; col++) {
-        const x = 18 + col * 10;
-        pins[`BP_${col}`] = createPin(`BP_${col}`, 'BP', 'power', 'bidirectional', { x, y: 156 });
-        pins[`BN_${col}`] = createPin(`BN_${col}`, 'BN', 'ground', 'bidirectional', { x, y: 168 });
+        const x = 20 + col * 10;
+        pins[`BP_${col}`] = createPin(`BP_${col}`, 'BP', 'power', 'bidirectional', { x, y: 160 });
+        pins[`BN_${col}`] = createPin(`BN_${col}`, 'BN', 'ground', 'bidirectional', { x, y: 170 });
       }
 
       properties = { rows: 10, columns: 30 };

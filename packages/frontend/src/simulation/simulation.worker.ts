@@ -563,6 +563,31 @@ function initializeSimulation(hex: string, graphData: any) {
           }
         }
       }
+
+      // Initialize Push Buttons to Released (HIGH) state
+      for (const [id, comp] of circuitGraph.components.entries()) {
+        if (comp.type === 'PUSH_BUTTON') {
+          let arduinoId = null;
+          for (const [aid, c] of circuitGraph.components.entries()) {
+            if (c.type === 'ARDUINO_UNO') { arduinoId = aid; break; }
+          }
+          if (arduinoId) {
+            const allPins = ['D0','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13', 'A0','A1','A2','A3','A4','A5'];
+            for (const pin of allPins) {
+              let reachesArduino = false;
+              for (const pinObj of comp.pins || []) {
+                if (circuitGraph.findPath(`${id}.${pinObj.id}`, `${arduinoId}.${pin}`)) {
+                  reachesArduino = true;
+                  break;
+                }
+              }
+              if (reachesArduino) {
+                setArduinoPin(pin, true); // True = High = Released
+              }
+            }
+          }
+        }
+      }
     }
 
     // PORT LISTENERS
@@ -726,8 +751,38 @@ self.onmessage = function (e) {
         }
       }
       
+      // Handle digital inputs (like PUSH_BUTTON)
+      if (circuitGraph && payload.componentId) {
+        const comp = circuitGraph.components.get(payload.componentId);
+        if (comp && comp.type === 'PUSH_BUTTON') {
+          const state = payload.value === 1; // 1 = released (HIGH), 0 = pressed (LOW)
+          
+          let arduinoId = null;
+          for (const [aid, c] of circuitGraph.components.entries()) {
+            if (c.type === 'ARDUINO_UNO') { arduinoId = aid; break; }
+          }
+          
+          if (arduinoId) {
+            const allPins = ['D0','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13', 'A0','A1','A2','A3','A4','A5'];
+            for (const pin of allPins) {
+              let reachesArduino = false;
+              for (const pinObj of comp.pins || []) {
+                if (circuitGraph.findPath(`${payload.componentId}.${pinObj.id}`, `${arduinoId}.${pin}`)) {
+                  reachesArduino = true;
+                  break;
+                }
+              }
+              if (reachesArduino) {
+                setArduinoPin(pin, state);
+                registerActivity();
+              }
+            }
+          }
+        }
+      }
+
       // Handle legacy raw ADC input if any
-      if (payload.pinId && payload.pinId.startsWith('A')) {
+      if (payload.pinId && payload.pinId.startsWith('A') && payload.value > 1) {
         const channel = parseInt(payload.pinId.substring(1), 10);
         if (!isNaN(channel)) {
           setAnalogInputVoltage(channel, payload.value);

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useComponentDropAnimation } from '../../../hooks/useComponentDropAnimation';
 import { Group, Rect, Circle, Label, Tag, Text, Line } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
@@ -16,7 +16,7 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
   const [hoveredPin, setHoveredPin] = useState<string | null>(null);
   const [isHoveringButton, setIsHoveringButton] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
-  
+
   const outerGroupRef = useRef<any>(null);
   useComponentDropAnimation(component, outerGroupRef);
   const capRef = useRef<any>(null);
@@ -24,7 +24,7 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
   const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = React.useContext(CanvasContext);
 
   const status = useSimulationStore((state) => state.status);
-  
+
   const handleDragStart = () => {
     useWorkspaceStore.getState().pushHistory();
   };
@@ -38,6 +38,7 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
   };
 
   const handleClick = (e: KonvaEventObject<MouseEvent>) => {
+    if (status === 'RUNNING') return;
     useWorkspaceStore.getState().selectComponent(component.id, e.evt.shiftKey);
   };
 
@@ -49,12 +50,12 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
   const handleButtonDown = (e: KonvaEventObject<MouseEvent>) => {
     if (status !== 'RUNNING') return;
     e.cancelBubble = true;
-    
+
     setIsPressed(true);
     if (capRef.current) {
       capRef.current.to({ y: 22, duration: 0.05 });
     }
-    
+
     window.dispatchEvent(new CustomEvent('EXTERNAL_INPUT', {
       detail: { componentId: component.id, state: 'pressed' }
     }));
@@ -66,7 +67,7 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
     if (capRef.current) {
       capRef.current.to({ y: 20, duration: 0.08, easing: Konva.Easings.EaseOut });
     }
-    
+
     window.dispatchEvent(new CustomEvent('EXTERNAL_INPUT', {
       detail: { componentId: component.id, state: 'released' }
     }));
@@ -112,7 +113,7 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
               />
             </Group>
           )}
-      </Group>
+        </Group>
       );
     });
   };
@@ -134,8 +135,14 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
 
       {/* Leads */}
       <Group listening={false}>
-        <Line points={[0, 20, 8, 20]} stroke="#C0C0C0" strokeWidth={2} />
-        <Line points={[32, 20, 40, 20]} stroke="#C0C0C0" strokeWidth={2} />
+        {/* Top-left leg (1A) */}
+        <Line points={[0, 12, 8, 12]} stroke="#C0C0C0" strokeWidth={2} />
+        {/* Top-right leg (1B) */}
+        <Line points={[32, 12, 40, 12]} stroke="#C0C0C0" strokeWidth={2} />
+        {/* Bottom-left leg (2A) */}
+        <Line points={[0, 28, 8, 28]} stroke="#C0C0C0" strokeWidth={2} />
+        {/* Bottom-right leg (2B) */}
+        <Line points={[32, 28, 40, 28]} stroke="#C0C0C0" strokeWidth={2} />
       </Group>
 
       {/* Body */}
@@ -145,7 +152,7 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
         cornerRadius={2}
         listening={false}
       />
-      
+
       {/* Corner pins (decorative) */}
       <Group listening={false}>
         <Circle x={11} y={11} radius={3} fill="#C0C0C0" />
@@ -175,7 +182,7 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
 
       {/* Tooltip for non-running state */}
       {isHoveringButton && status !== 'RUNNING' && (
-        <Label x={20} y={0} opacity={0.9}>
+        <Label x={20} y={8} opacity={0.9} listening={false}>
           <Tag fill="#1f2937" pointerDirection="down" pointerWidth={6} pointerHeight={6} cornerRadius={4} />
           <Text text="Run simulation to interact" fill="white" fontSize={10} padding={4} />
         </Label>
@@ -185,5 +192,3 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
     </Group>
   );
 };
-
-

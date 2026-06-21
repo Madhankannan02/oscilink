@@ -26,7 +26,25 @@ class SimulationManager {
     (window as any).__simWorker = this.worker;
 
     window.addEventListener('EXTERNAL_INPUT', ((e: CustomEvent) => {
-      this.worker?.postMessage({ type: 'EXTERNAL_INPUT', payload: e.detail });
+      const detail = e.detail;
+      
+      // If we got a raw button press event without a pinId
+      if (detail.state !== undefined && !detail.pinId) {
+        const components = useWorkspaceStore.getState().components;
+        const component = components.find(c => c.id === detail.componentId);
+        
+        if (component && component.type === 'PUSH_BUTTON') {
+          // Send 0 for pressed (LOW), 1 for released (HIGH)
+          const value = detail.state === 'pressed' ? 0 : 1;
+          // Use PIN_1A as the default input side of the button
+          const pinId = 'PIN_1A'; 
+          this.sendExternalInput(detail.componentId, pinId, value);
+          return;
+        }
+      }
+      
+      // Otherwise, forward as normal
+      this.worker?.postMessage({ type: 'EXTERNAL_INPUT', payload: detail });
     }) as EventListener);
 
     this.worker.onmessage = (e: MessageEvent) => {
