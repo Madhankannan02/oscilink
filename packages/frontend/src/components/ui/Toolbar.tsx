@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { PanelLeft, PanelRight, Play, Loader2, Square, RotateCcw, Cpu, ChevronDown, FileCode2, FolderOpen, Save, AlertTriangle, AlertCircle, User } from 'lucide-react';
+import { PanelLeft, PanelRight, Play, Loader2, Square, RotateCcw, Cpu, ChevronDown, FileCode2, FolderOpen, Save, AlertTriangle, AlertCircle } from 'lucide-react';
 import { UndoRedoButtons } from './UndoRedoButtons';
 import { useCompiler } from '../../hooks/useCompiler';
 import { useSimulation } from '../../hooks/useSimulation';
@@ -11,6 +11,7 @@ import { useWorkspaceStore } from '../../store/workspaceStore';
 import { CodeEditorRef } from '../editor/CodeEditor';
 import toast from 'react-hot-toast';
 import { Button } from './Button';
+import { UserMenu } from './UserMenu';
 import { clsx } from 'clsx';
 
 interface ToolbarProps {
@@ -226,11 +227,9 @@ export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, errorP
           
           <HelpMenu />
 
-          <Tooltip position="bottom" content="User Profile">
-            <div className="ml-2 w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center border border-primary/30 cursor-pointer hover:bg-primary/30 transition-colors">
-              <User size={14} />
-            </div>
-          </Tooltip>
+          <div className="ml-2 flex items-center justify-center">
+            <UserMenu />
+          </div>
         </div>
       </div>
     </header>

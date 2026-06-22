@@ -13,11 +13,19 @@ import { setupAutoSave, deserializeProject } from './utils/projectSerializer';
 import { WelcomeModal } from './components/ui/WelcomeModal';
 import { GuidedTour } from './components/ui/GuidedTour';
 import { SensorValuesControl } from './components/ui/SensorValuesControl';
+import { AuthModal } from './components/ui/AuthModal';
+import { useAuthStore } from './store/authStore';
+import { useUiStore } from './store/uiStore';
 
 function App() {
   useKeyboardShortcuts();
+  
+  const initializeAuth = useAuthStore(state => state.initialize);
+  const isAuthModalOpen = useUiStore(state => state.isAuthModalOpen);
+  const setAuthModalOpen = useUiStore(state => state.setAuthModalOpen);
 
   useEffect(() => {
+    initializeAuth();
     setupAutoSave();
 
     const savedTime = localStorage.getItem('arduino-sim-autosave-time');
@@ -64,6 +72,7 @@ function App() {
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-background">
       {/* Tooltips and Toasts */}
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setAuthModalOpen(false)} />
       <WelcomeModal />
       <GuidedTour />
       <Toaster position="bottom-right" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
