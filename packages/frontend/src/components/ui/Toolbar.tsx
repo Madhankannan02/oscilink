@@ -42,8 +42,12 @@ export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, errorP
   const status = useSimulationStore(state => state.status);
   const circuitErrors = useSimulationStore(state => state.circuitErrors);
   const runtimeWarnings = useSimulationStore(state => state.runtimeWarnings);
+  
+  const resetWorkspace = useWorkspaceStore(state => state.resetWorkspace);
+  const setCode = useEditorStore(state => state.setCode);
 
   const [compileDropdownOpen, setCompileDropdownOpen] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -61,6 +65,16 @@ export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, errorP
   const totalErrors = compilationErrors.length + staticErrorCount + circuitErrors.filter(e => e.severity === 'error').length;
   const totalWarnings = runtimeWarnings.length + staticWarningCount + circuitErrors.filter(e => e.severity === 'warning').length;
   const hasDiagnostics = totalErrors > 0 || totalWarnings > 0 || circuitErrors.length > 0;
+
+  const handleNewProject = () => {
+    setShowConfirmModal(true);
+  };
+
+  const executeNewProject = () => {
+    resetWorkspace();
+    setCode('');
+    setShowConfirmModal(false);
+  };
 
   const handleRun = () => {
     setCompileDropdownOpen(false);
@@ -103,7 +117,7 @@ export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, errorP
         {/* File Operations */}
         <div className="flex items-center gap-1 bg-elevated p-1 rounded-md border border-border-subtle flex-shrink-0">
           <Tooltip position="bottom" content="New Project" shortcut="Ctrl+N">
-            <Button variant="ghost" size="sm" className="px-2" onClick={() => toast('New project feature coming soon')}>
+            <Button variant="ghost" size="sm" className="px-2" onClick={handleNewProject}>
               <FileCode2 size={16} />
             </Button>
           </Tooltip>
@@ -240,6 +254,31 @@ export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, errorP
           </div>
         </div>
       </div>
+
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-elevated border border-border-default rounded-xl shadow-2xl w-full max-w-sm p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
+            <h2 className="text-lg font-semibold text-text-primary">Create New Project</h2>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              Are you sure you want to start a new project? Any unsaved changes will be lost.
+            </p>
+            <div className="flex justify-end gap-3 mt-2">
+              <Button 
+                variant="ghost" 
+                onClick={() => setShowConfirmModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="danger" 
+                onClick={executeNewProject}
+              >
+                Start Fresh
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
