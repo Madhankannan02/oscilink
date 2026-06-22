@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { File, FolderOpen, Save, BookOpen, ChevronRight } from 'lucide-react';
 import { useWorkspaceStore } from '../../store/workspaceStore';
-import { useEditorStore } from '../../store/editorStore';
+import { useEditorStore, DEFAULT_CODE } from '../../store/editorStore';
 import { useSimulationStore } from '../../store/simulationStore';
 import { deserializeProject, downloadProject, loadProjectFromFile } from '../../utils/projectSerializer';
 import { exampleProjects } from '../../data/exampleProjects';
@@ -47,7 +47,7 @@ export const FileMenu: React.FC = () => {
 
   const executeNewProject = () => {
     useWorkspaceStore.getState().loadProject([], [], { x: 0, y: 0, scale: 1 });
-    useEditorStore.getState().setCode(`void setup() {\n\n}\n\nvoid loop() {\n\n}`);
+    useEditorStore.getState().setCode(DEFAULT_CODE);
     useSimulationStore.getState().resetSimulation?.();
     toast.success("New project created");
     setIsOpen(false);

@@ -5,7 +5,7 @@ import { useCompiler } from '../../hooks/useCompiler';
 import { useSimulation } from '../../hooks/useSimulation';
 import { HelpMenu } from './HelpMenu';
 import { Tooltip } from './Tooltip';
-import { useEditorStore } from '../../store/editorStore';
+import { useEditorStore, DEFAULT_CODE } from '../../store/editorStore';
 import { useSimulationStore } from '../../store/simulationStore';
 import { useWorkspaceStore } from '../../store/workspaceStore';
 import { useUiStore } from '../../store/uiStore';
@@ -72,7 +72,7 @@ export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, errorP
 
   const executeNewProject = () => {
     resetWorkspace();
-    setCode('');
+    setCode(DEFAULT_CODE);
     setShowConfirmModal(false);
   };
 

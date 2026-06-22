@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useUiStore } from '../../store/uiStore';
 import { useWorkspaceStore } from '../../store/workspaceStore';
-import { useEditorStore } from '../../store/editorStore';
+import { useEditorStore, DEFAULT_CODE } from '../../store/editorStore';
 import { 
   X, 
   Plus, 
@@ -59,7 +59,7 @@ export function MyProjectsPanel() {
   const handleNewProject = () => {
     if (confirm('Are you sure you want to start a new project? Any unsaved changes will be lost.')) {
       resetWorkspace();
-      setCode('');
+      setCode(DEFAULT_CODE);
       setMyProjectsOpen(false);
     }
   };

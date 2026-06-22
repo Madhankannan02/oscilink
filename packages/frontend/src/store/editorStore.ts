@@ -3,7 +3,7 @@ import { devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { CompilationError } from '../types/simulation';
 
-const DEFAULT_CODE = `void setup() {
+export const DEFAULT_CODE = `void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
 }
 
