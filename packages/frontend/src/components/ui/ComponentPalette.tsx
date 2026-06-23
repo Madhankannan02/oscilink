@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Search, ChevronRight, Cpu, Lightbulb,
-  Waves, Activity, CircleDot, Speaker, Monitor,
-  Thermometer, ToggleLeft, Box, LayoutGrid
-} from 'lucide-react';
+import { Search, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useWorkspaceStore } from '../../store/workspaceStore';
 import { createComponent } from '../../utils/componentFactory';
 import { ComponentType } from '../../types/components';
+import { ComponentThumbnail } from './ComponentThumbnail';
 
 interface ComponentDef {
   type: ComponentType;
   name: string;
   description: string;
-  icon: React.FC<any>;
   propertyLabel?: string;
   hasColorSelector?: boolean;
 }
@@ -27,38 +23,38 @@ const CATEGORIES: CategoryDef[] = [
   {
     name: 'Microcontrollers',
     components: [
-      { type: 'ARDUINO_UNO', name: 'Arduino Uno', description: 'ATmega328P based microcontroller board', icon: Cpu }
+      { type: 'ARDUINO_UNO', name: 'Arduino Uno', description: 'ATmega328P based microcontroller board' }
     ]
   },
   {
     name: 'Passive Components',
     components: [
-      { type: 'LED', name: 'LED', description: 'Light Emitting Diode', icon: Lightbulb },
-      { type: 'RESISTOR', name: 'Resistor', description: 'Current limiting resistor', icon: Activity },
-      { type: 'PUSH_BUTTON', name: 'Push Button', description: 'Momentary tactile switch', icon: CircleDot },
-      { type: 'POTENTIOMETER', name: 'Potentiometer', description: 'Variable resistor', icon: ToggleLeft }
+      { type: 'LED', name: 'LED', description: 'Light Emitting Diode' },
+      { type: 'RESISTOR', name: 'Resistor', description: 'Current limiting resistor' },
+      { type: 'PUSH_BUTTON', name: 'Push Button', description: 'Momentary tactile switch' },
+      { type: 'POTENTIOMETER', name: 'Potentiometer', description: 'Variable resistor' }
     ]
   },
   {
     name: 'Output Devices',
     components: [
-      { type: 'SERVO_MOTOR', name: 'Servo Motor', description: 'Standard 180° micro servo', icon: Box },
-      { type: 'BUZZER', name: 'Buzzer', description: 'Piezoelectric buzzer', icon: Speaker },
-      { type: 'LCD_16X2', name: 'LCD 16x2', description: 'Liquid crystal display', icon: Monitor }
+      { type: 'SERVO_MOTOR', name: 'Servo Motor', description: 'Standard 180° micro servo' },
+      { type: 'BUZZER', name: 'Buzzer', description: 'Piezoelectric buzzer' },
+      { type: 'LCD_16X2', name: 'LCD 16x2', description: 'Liquid crystal display' }
     ]
   },
   {
     name: 'Sensors',
     components: [
-      { type: 'ULTRASONIC_SENSOR', name: 'Ultrasonic Sensor HC-SR04', description: 'Distance sensor', icon: Waves },
-      { type: 'TEMPERATURE_SENSOR', name: 'Temperature Sensor DHT11', description: 'Temp & humidity', icon: Thermometer }
+      { type: 'ULTRASONIC_SENSOR', name: 'Ultrasonic Sensor HC-SR04', description: 'Distance sensor' },
+      { type: 'TEMPERATURE_SENSOR', name: 'Temperature Sensor DHT11', description: 'Temp & humidity' }
     ]
   },
   {
     name: 'Other',
     components: [
-      { type: 'RELAY', name: 'Relay', description: '5V SPDT relay module', icon: ToggleLeft },
-      { type: 'BREADBOARD', name: 'Breadboard', description: 'Standard half-size breadboard', icon: LayoutGrid }
+      { type: 'RELAY', name: 'Relay', description: '5V SPDT relay module' },
+      { type: 'BREADBOARD', name: 'Breadboard', description: 'Standard half-size breadboard' }
     ]
   }
 ];
@@ -75,14 +71,13 @@ export const ComponentPalette: React.FC = () => {
     currentX: number;
     currentY: number;
     name: string;
-    icon: React.FC<any> | null;
   } | null>(null);
 
   const toggleCategory = (name: string) => {
     setCollapsedCategories(prev => ({ ...prev, [name]: !prev[name] }));
   };
 
-  const handleMouseDown = (e: React.MouseEvent, type: ComponentType, name: string, icon: React.FC<any>) => {
+  const handleMouseDown = (e: React.MouseEvent, type: ComponentType, name: string) => {
     e.preventDefault();
     setDragState({
       isDragging: false,
@@ -91,8 +86,7 @@ export const ComponentPalette: React.FC = () => {
       startY: e.clientY,
       currentX: e.clientX,
       currentY: e.clientY,
-      name,
-      icon
+      name
     });
   };
 
@@ -218,11 +212,11 @@ export const ComponentPalette: React.FC = () => {
                     {category.components.map(comp => (
                       <div
                         key={comp.type}
-                        onMouseDown={(e) => handleMouseDown(e, comp.type, comp.name, comp.icon)}
+                        onMouseDown={(e) => handleMouseDown(e, comp.type, comp.name)}
                         className="flex items-start gap-3 p-3 bg-surface border border-border rounded cursor-grab active:cursor-grabbing hover:bg-surface-hover hover:border-primary/50 active:scale-[0.98] transition-all select-none"
                       >
-                        <div className="bg-[#181818] p-2 rounded flex-shrink-0 text-text-secondary">
-                          <comp.icon size={20} />
+                        <div className="bg-[#181818] rounded flex-shrink-0 flex items-center justify-center" style={{ width: 40, height: 40 }}>
+                          <ComponentThumbnail type={comp.type} size={32} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="text-sm font-medium text-primary truncate">{comp.name}</h3>
@@ -239,7 +233,7 @@ export const ComponentPalette: React.FC = () => {
       </div>
 
       {/* Drag Ghost Overlay */}
-      {dragState?.isDragging && dragState.icon && (
+      {dragState?.isDragging && dragState.type && (
         <div
           className="fixed pointer-events-none z-50 flex items-center gap-2 bg-surface border rounded px-3 py-2 shadow-2xl transition-opacity duration-150"
           style={{
@@ -250,7 +244,7 @@ export const ComponentPalette: React.FC = () => {
             backgroundColor: isOverCanvas ? '' : 'rgba(239, 68, 68, 0.1)'
           }}
         >
-          <dragState.icon size={16} className="text-primary" />
+          <ComponentThumbnail type={dragState.type} size={20} />
           <span className="text-sm font-medium text-primary whitespace-nowrap">{dragState.name}</span>
         </div>
       )}

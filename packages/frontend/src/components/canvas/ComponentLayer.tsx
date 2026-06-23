@@ -26,7 +26,7 @@ const FallbackComponent = ({ component }: { component: CircuitComponent }) => (
   </Group>
 );
 
-const ComponentRouter = ({ component }: { component: CircuitComponent }) => {
+export const ComponentRouter = ({ component }: { component: CircuitComponent }) => {
   switch (component.type) {
     case 'ARDUINO_UNO': return <ArduinoUno component={component} />;
     case 'LED': return <LED component={component} />;
