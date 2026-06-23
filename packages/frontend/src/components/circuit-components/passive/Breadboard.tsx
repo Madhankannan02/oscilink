@@ -68,7 +68,7 @@ export const Breadboard = memo(({ component }: BreadboardProps) => {
   useEffect(() => {
     const unsubscribe = useSimulationStore.subscribe(
       (state) => state.pinVoltages,
-      (voltages) => {
+      (voltages: any) => {
         const topPosV = voltages[`${component.id}-TP_0`] || voltages[`${component.id}:TP_0`] || 0;
         const topNegV = voltages[`${component.id}-TN_0`] || voltages[`${component.id}:TN_0`] || 0;
         const bottomPosV = voltages[`${component.id}-BP_0`] || voltages[`${component.id}:BP_0`] || 0;

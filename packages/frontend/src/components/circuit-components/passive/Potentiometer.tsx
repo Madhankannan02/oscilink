@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
-import { useComponentDropAnimation } from '../../../hooks/useComponentDropAnimation';
 import { Group, Rect, Circle, Label, Tag, Text, Line } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
 import Konva from 'konva';

@@ -77,7 +77,7 @@ class SimulationManager {
 
     switch (type) {
       case 'PIN_CHANGE':
-        if (store.setPinVoltage) {
+        if (typeof store.setPinVoltage === 'function') {
           let compId = payload.componentId;
           if (compId === 'arduino-uno') {
             const arduino = useWorkspaceStore.getState().components.find(c => c.type === 'ARDUINO_UNO');
@@ -163,7 +163,7 @@ class SimulationManager {
     }
     
     // Batch pin voltages
-    if (Object.keys(this.pendingPinVoltages).length > 0 && store.setPinVoltage) {
+    if (Object.keys(this.pendingPinVoltages).length > 0 && typeof store.setPinVoltage === 'function') {
       for (const [pinKey, voltage] of Object.entries(this.pendingPinVoltages)) {
         store.setPinVoltage(pinKey, voltage);
       }

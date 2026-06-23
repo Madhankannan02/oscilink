@@ -42,7 +42,7 @@ export const LED = memo(({ component }: LEDProps) => {
 
     const unsubscribe = useSimulationStore.subscribe(
       (state) => (state.componentStates[component.id] as any)?.brightness ?? 0,
-      (newBrightness) => {
+      (newBrightness: number) => {
         targetBrightness = newBrightness;
       }
     );
@@ -73,8 +73,8 @@ export const LED = memo(({ component }: LEDProps) => {
         }
         
         if (bodyGroupRef.current) {
-          bodyGroupRef.current.shadowBlur(currentBrightness > 0.05 ? 15 * currentBrightness : 0);
-          bodyGroupRef.current.shadowOpacity(currentBrightness);
+          (bodyGroupRef.current as any).shadowBlur(currentBrightness > 0.05 ? 15 * currentBrightness : 0);
+          (bodyGroupRef.current as any).shadowOpacity(currentBrightness);
         }
 
         if (domeRef.current) domeRef.current.fill(currentColor);

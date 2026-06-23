@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
+import { devtools, subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import {
   SimulationStatus,
@@ -36,8 +36,9 @@ type SimulationStore = SimulationState & SimulationActions;
 
 export const useSimulationStore = create<SimulationStore>()(
   devtools(
-    immer((set) => ({
-      status: 'IDLE',
+    subscribeWithSelector(
+      immer((set) => ({
+        status: 'IDLE',
       componentStates: {},
       serialOutput: [],
       pinVoltages: {},
@@ -84,7 +85,7 @@ export const useSimulationStore = create<SimulationStore>()(
         state.runtimeWarnings = [];
         state.errorMessage = null;
       })
-    })),
+    }))),
     { name: 'simulation-store', enabled: (import.meta as any).env ? (import.meta as any).env.DEV : true }
   )
 );

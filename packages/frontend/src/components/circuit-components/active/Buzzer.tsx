@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
-import { useComponentDropAnimation } from '../../../hooks/useComponentDropAnimation';
 import { Group, Rect, Circle, Text, Path } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
 import Konva from 'konva';
@@ -44,7 +43,7 @@ export const Buzzer = memo(({ component }: BuzzerProps) => {
     
     const unsubscribe = useSimulationStore.subscribe(
       (state) => (state.componentStates[component.id] as any)?.isActive ?? false,
-      (isActive) => {
+      (isActive: boolean) => {
         isActiveRef.current = isActive;
         if (audioRef.current) {
           if (isActive && !isMuted) {

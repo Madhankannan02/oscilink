@@ -13,8 +13,6 @@ interface TemperatureSensorProps {
 
 export const TemperatureSensor = memo(({ component }: TemperatureSensorProps) => {
   const [hoveredPin, setHoveredPin] = useState<string | null>(null);
-  const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = useContext(CanvasContext);
-
   const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = React.useContext(CanvasContext);
 
   const displayGroupRef = useRef<Konva.Group>(null);

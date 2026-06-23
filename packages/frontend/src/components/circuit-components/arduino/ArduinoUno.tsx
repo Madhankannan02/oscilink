@@ -39,7 +39,7 @@ export const ArduinoUno = memo(({ component }: ArduinoUnoProps) => {
   useEffect(() => {
     const unsubscribe = useSimulationStore.subscribe(
       (state) => state.pinVoltages,
-      (voltages) => {
+      (voltages: any) => {
         const getV = (pid: string) => voltages[`${component.id}-${pid}`] || voltages[`${component.id}:${pid}`] || 0;
         
         // update D13
