@@ -1,4 +1,4 @@
-import { useState, useCallback, memo } from 'react';
+import { useState, useContext, useCallback, memo } from 'react';
 import { Group, Rect, Circle, Text, Line } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
 import { CircuitComponent } from '../../../types/components';
