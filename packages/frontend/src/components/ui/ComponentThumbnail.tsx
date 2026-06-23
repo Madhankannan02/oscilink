@@ -26,16 +26,16 @@ export const ComponentThumbnail: React.FC<ComponentThumbnailProps> = ({ type, si
     switch (type) {
       case 'ARDUINO_UNO': return { scale: size / 210, offsetX: -100, offsetY: -74 };
       case 'BREADBOARD': return { scale: size / 330, offsetX: -165, offsetY: -90 };
-      case 'LCD_16X2': return { scale: size / 100, offsetX: -50, offsetY: -20 };
-      case 'LED': return { scale: size / 40, offsetX: -15, offsetY: -20 };
-      case 'RESISTOR': return { scale: size / 60, offsetX: -30, offsetY: -10 };
-      case 'PUSH_BUTTON': return { scale: size / 40, offsetX: -20, offsetY: -20 };
-      case 'POTENTIOMETER': return { scale: size / 60, offsetX: -30, offsetY: -30 };
-      case 'SERVO_MOTOR': return { scale: size / 80, offsetX: -40, offsetY: -30 };
-      case 'BUZZER': return { scale: size / 50, offsetX: -25, offsetY: -25 };
-      case 'ULTRASONIC_SENSOR': return { scale: size / 60, offsetX: -30, offsetY: -15 };
-      case 'RELAY': return { scale: size / 60, offsetX: -30, offsetY: -20 };
-      case 'TEMPERATURE_SENSOR': return { scale: size / 50, offsetX: -25, offsetY: -15 };
+      case 'LCD_16X2': return { scale: size / 176, offsetX: -76, offsetY: 36 };
+      case 'LED': return { scale: size / 55, offsetX: -20, offsetY: -22.5 };
+      case 'RESISTOR': return { scale: size / 70, offsetX: -30, offsetY: -12.5 };
+      case 'PUSH_BUTTON': return { scale: size / 50, offsetX: -20, offsetY: -20 };
+      case 'POTENTIOMETER': return { scale: size / 40, offsetX: -25, offsetY: -20 };
+      case 'SERVO_MOTOR': return { scale: size / 68, offsetX: -25, offsetY: -8 };
+      case 'BUZZER': return { scale: size / 72, offsetX: -20, offsetY: -4 };
+      case 'ULTRASONIC_SENSOR': return { scale: size / 104, offsetX: 0, offsetY: 29 };
+      case 'RELAY': return { scale: size / 100, offsetX: 0, offsetY: 0 };
+      case 'TEMPERATURE_SENSOR': return { scale: size / 66, offsetX: 0, offsetY: 33 };
       default: return { scale: size / 100, offsetX: -50, offsetY: -50 };
     }
   }, [type, size]);
