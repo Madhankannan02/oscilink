@@ -23,7 +23,7 @@ export const CanvasContext = createContext<{
   handlePinMouseLeave: () => {},
 });
 
-export const Canvas: React.FC = () => {
+export const Canvas: React.FC<{ rightPanelOpen?: boolean }> = ({ rightPanelOpen = false }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   
@@ -330,7 +330,7 @@ export const Canvas: React.FC = () => {
       {/* Zoom Indicator UI Overlay */}
       <div 
         className="absolute bottom-4 flex items-center bg-surface border border-border rounded-full shadow-lg overflow-hidden text-text select-none z-10 h-10 transition-all duration-300 ease-in-out"
-        style={{ right: '16px' }}
+        style={{ right: rightPanelOpen ? '466px' : '16px' }}
       >
         <button 
           onClick={undo}
