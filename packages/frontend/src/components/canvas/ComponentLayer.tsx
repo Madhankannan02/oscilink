@@ -47,9 +47,6 @@ const ComponentRouter = ({ component }: { component: CircuitComponent }) => {
 
 const MemoizedComponent = React.memo(
   ({ component }: { component: CircuitComponent }) => {
-    // Select only this specific component's simulation state to prevent unnecessary re-renders
-    useSimulationStore(state => state.componentStates[component.id]);
-    
     return <ComponentRouter component={component} />;
   },
   (prev, next) => {
@@ -63,7 +60,7 @@ const MemoizedComponent = React.memo(
   }
 );
 
-export const ComponentLayer: React.FC = () => {
+export const ComponentLayer: React.FC<{ dimensions: { width: number, height: number } }> = ({ dimensions }) => {
   const components = useWorkspaceStore(state => state.components);
   const viewport = useWorkspaceStore(state => state.viewport);
   const layerRef = useRef<Konva.Layer>(null);
@@ -92,6 +89,28 @@ export const ComponentLayer: React.FC = () => {
     });
   }, [components]);
 
+  const visibleComponents = React.useMemo(() => {
+    const { x, y, scale } = viewport;
+    const { width, height } = dimensions;
+
+    const startX = -x / scale;
+    const startY = -y / scale;
+    const endX = startX + width / scale;
+    const endY = startY + height / scale;
+
+    // Use a generic bounding box check (max component size is ~400x400)
+    const padding = 400;
+
+    return sortedComponents.filter(c => {
+      return (
+        c.position.x >= startX - padding &&
+        c.position.x <= endX + padding &&
+        c.position.y >= startY - padding &&
+        c.position.y <= endY + padding
+      );
+    });
+  }, [sortedComponents, viewport, dimensions]);
+
   return (
     <Layer 
       ref={layerRef}
@@ -100,7 +119,7 @@ export const ComponentLayer: React.FC = () => {
       scaleX={viewport.scale} 
       scaleY={viewport.scale}
     >
-      {sortedComponents.map(comp => (
+      {visibleComponents.map(comp => (
         <MemoizedComponent key={comp.id} component={comp} />
       ))}
     </Layer>

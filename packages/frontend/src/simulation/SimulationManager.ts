@@ -7,6 +7,10 @@ class SimulationManager {
   private worker: Worker | null = null;
   public initialized: boolean = false;
   private shownWarnings: Set<string> = new Set();
+  
+  private pendingUpdates: Record<string, any> = {};
+  private pendingPinVoltages: Record<string, number> = {};
+  private rafId: number | null = null;
 
   private constructor() {
     this.initWorker();
@@ -79,13 +83,18 @@ class SimulationManager {
             const arduino = useWorkspaceStore.getState().components.find(c => c.type === 'ARDUINO_UNO');
             if (arduino) compId = arduino.id;
           }
-          store.setPinVoltage(`${compId}-${payload.pinId}`, payload.voltage);
+          this.pendingPinVoltages[`${compId}-${payload.pinId}`] = payload.voltage;
+          this.scheduleFlush();
         }
         break;
 
       case 'BATCH_UPDATE':
-        if (store.batchUpdateComponentStates && payload.updates) {
-          store.batchUpdateComponentStates(payload.updates);
+        if (payload.updates) {
+          // Merge updates deeply
+          for (const [compId, update] of Object.entries(payload.updates)) {
+            this.pendingUpdates[compId] = { ...this.pendingUpdates[compId], ...(update as object) };
+          }
+          this.scheduleFlush();
         }
         break;
       case 'SERIAL_OUTPUT':
@@ -134,16 +143,31 @@ class SimulationManager {
           });
         }
         break;
-      case 'PIN_CHANGE':
-        if (store.setPinVoltage) {
-          let compId = payload.componentId;
-          if (compId === 'arduino-uno') {
-            const arduino = useWorkspaceStore.getState().components.find(c => c.type === 'ARDUINO_UNO');
-            if (arduino) compId = arduino.id;
-          }
-          store.setPinVoltage(`${compId}-${payload.pinId}`, payload.voltage);
-        }
-        break;
+    }
+  }
+
+  private scheduleFlush() {
+    if (this.rafId === null) {
+      this.rafId = requestAnimationFrame(() => this.flushUpdates());
+    }
+  }
+
+  private flushUpdates() {
+    this.rafId = null;
+    const store = useSimulationStore.getState();
+    
+    // Batch component states
+    if (Object.keys(this.pendingUpdates).length > 0 && store.batchUpdateComponentStates) {
+      store.batchUpdateComponentStates(this.pendingUpdates);
+      this.pendingUpdates = {};
+    }
+    
+    // Batch pin voltages
+    if (Object.keys(this.pendingPinVoltages).length > 0 && store.setPinVoltage) {
+      for (const [pinKey, voltage] of Object.entries(this.pendingPinVoltages)) {
+        store.setPinVoltage(pinKey, voltage);
+      }
+      this.pendingPinVoltages = {};
     }
   }
 
@@ -164,6 +188,10 @@ class SimulationManager {
     this.worker?.postMessage({ type: 'STOP' });
     this.initialized = false;
     this.shownWarnings.clear();
+    this.pendingUpdates = {};
+    this.pendingPinVoltages = {};
+    if (this.rafId !== null) cancelAnimationFrame(this.rafId);
+    this.rafId = null;
     useSimulationStore.getState().resetSimulation();
   }
 
@@ -201,6 +229,7 @@ class SimulationManager {
   public destroy() {
     this.stop();
     this.worker?.terminate();
+    if (this.rafId !== null) cancelAnimationFrame(this.rafId);
   }
 }
 

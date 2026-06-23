@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { Group, Rect, Text, Circle, Label, Tag, Path, Line } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
 import Konva from 'konva';
@@ -11,89 +11,124 @@ interface ArduinoUnoProps {
   component: CircuitComponent;
 }
 
-export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
+export const ArduinoUno = memo(({ component }: ArduinoUnoProps) => {
   const [hoveredPin, setHoveredPin] = useState<string | null>(null);
   const outerGroupRef = useRef<Konva.Group>(null);
+  const pcbGroupRef = useRef<Konva.Group>(null);
+
+  const d13Ref = useRef<Konva.Rect>(null);
+  const txRef = useRef<Konva.Rect>(null);
+  const rxRef = useRef<Konva.Rect>(null);
+  const pinRefs = useRef<Record<string, Konva.Circle>>({});
 
   const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = React.useContext(CanvasContext);
 
+  const pinList = Object.values(component.pins);
 
-  const pinVoltages = useSimulationStore(state => state.pinVoltages);
+  // Cache static PCB graphics
+  useEffect(() => {
+    if (pcbGroupRef.current) {
+      pcbGroupRef.current.cache({ pixelRatio: 2 });
+    }
+    return () => {
+      if (pcbGroupRef.current) pcbGroupRef.current.clearCache();
+    };
+  }, []);
 
-  const handleDragStart = () => {
+  // Subscribe to pin voltages to update LEDs and pin glows without re-rendering
+  useEffect(() => {
+    const unsubscribe = useSimulationStore.subscribe(
+      (state) => state.pinVoltages,
+      (voltages) => {
+        const getV = (pid: string) => voltages[`${component.id}-${pid}`] || voltages[`${component.id}:${pid}`] || 0;
+        
+        // update D13
+        const v13 = getV('D13') > 2.5;
+        if (d13Ref.current) {
+           d13Ref.current.fill(v13 ? '#fbbf24' : '#171717');
+           d13Ref.current.shadowColor(v13 ? '#fbbf24' : 'transparent');
+           d13Ref.current.shadowBlur(v13 ? 16 : 0);
+        }
+        
+        // update TX
+        const vTx = getV('TX') > 1;
+        if (txRef.current) {
+           txRef.current.fill(vTx ? '#facc15' : '#171717');
+           txRef.current.shadowColor(vTx ? '#facc15' : 'transparent');
+           txRef.current.shadowBlur(vTx ? 14 : 0);
+        }
+        
+        // update RX
+        const vRx = getV('RX') > 1;
+        if (rxRef.current) {
+           rxRef.current.fill(vRx ? '#facc15' : '#171717');
+           rxRef.current.shadowColor(vRx ? '#facc15' : 'transparent');
+           rxRef.current.shadowBlur(vRx ? 14 : 0);
+        }
+        
+        // update pins
+        for (const pin of pinList) {
+           const circle = pinRefs.current[pin.id];
+           if (circle) {
+             const v = getV(pin.id) > 2.5;
+             let fillCol = '#171717';
+             let glowCol = 'transparent';
+             if (v && (pin.type === 'digital' || pin.type === 'PWM' || pin.type === 'power')) {
+               fillCol = '#22d3ee';
+               glowCol = '#22d3ee';
+             }
+             circle.fill(fillCol);
+             circle.shadowColor(glowCol);
+             circle.shadowBlur(glowCol !== 'transparent' ? 3 : 0);
+           }
+        }
+      }
+    );
+    return unsubscribe;
+  }, [component.id, pinList]);
+
+  const handleDragStart = useCallback(() => {
     useWorkspaceStore.getState().pushHistory();
-  };
+  }, []);
 
-  const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragMove = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
 
-  const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragEnd = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
 
-  const handleClick = (e: KonvaEventObject<MouseEvent>) => {
+  const handleClick = useCallback((e: KonvaEventObject<MouseEvent>) => {
     useWorkspaceStore.getState().selectComponent(component.id, e.evt.shiftKey);
-  };
+  }, [component.id]);
 
-  const onPinMouseDown = (e: KonvaEventObject<MouseEvent>, pinId: string) => {
+  const onPinMouseDown = useCallback((e: KonvaEventObject<MouseEvent>, pinId: string) => {
     e.cancelBubble = true;
     const pin = component.pins[pinId];
     if (pin && pin.type !== 'power' && pin.type !== 'ground' && pin.connectedWireIds.length >= 1) {
-      // Prevent multiple connections on data pins, unless it's the target pin during draw
       const state = useWorkspaceStore.getState();
       if (!state.isDrawingWire) return;
     }
     handlePinMouseDown({ componentId: component.id, pinId });
-  };
-
-  const getPinVoltage = (pinId: string) => {
-    return pinVoltages[`${component.id}-${pinId}`] || pinVoltages[`${component.id}:${pinId}`] || 0;
-  };
+  }, [component.id, component.pins, handlePinMouseDown]);
 
   const sx = 200 / 780;
   const sy = 140 / 540;
 
-  // ─── HOVER DETECTION STRATEGY ───────────────────────────────────────────────
-  //
-  // Problem: At high zoom levels (e.g. 500%) per-shape onMouseEnter/onMouseLeave
-  // events on tiny ~5px hit rects become unreliable — the stage scale transforms
-  // screen coordinates but Konva's hit canvas pointer sampling can miss sub-pixel
-  // shapes when the cursor moves faster than the hit canvas sample rate.
-  //
-  // Solution: Use a SINGLE wide invisible overlay Rect covering each entire pin
-  // row. onMouseMove on the overlay computes which pin the cursor is over by
-  // transforming the stage pointer position into the component's local coordinate
-  // space and doing a simple nearest-pin lookup. This works correctly at any zoom
-  // level because we only need ONE large shape to be hit, then we do our own math.
-  //
-  // onMouseLeave on the outer Group clears the hover state — this fires reliably
-  // because the outer Group is large.
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  const pinList = Object.values(component.pins);
-
-  /**
-   * Given a Konva mouse event, transform the stage pointer into the outer
-   * Group's local coordinate space and return which pin (if any) is under it.
-   */
   const getPinAtPointer = (e: KonvaEventObject<MouseEvent>): string | null => {
     const stage = e.target.getStage();
     if (!stage || !outerGroupRef.current) return null;
 
-    // Stage pointer position is in ABSOLUTE (stage) coordinates
     const pointer = stage.getPointerPosition();
     if (!pointer) return null;
 
-    // Transform absolute → local coordinates of the outer Group
     const transform = outerGroupRef.current.getAbsoluteTransform().copy();
     transform.invert();
     const local = transform.point(pointer);
 
-    // Find the pin whose center is closest to the local pointer,
-    // within a tolerance that matches half the pin spacing.
-    const SNAP_X = 3.0;   // half of ~5px inter-pin spacing
-    const SNAP_Y = 5.0;   // half of hitH=10
+    const SNAP_X = 3.0;
+    const SNAP_Y = 5.0;
 
     let closest: string | null = null;
     let closestDist = Infinity;
@@ -113,7 +148,7 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
     return closest;
   };
 
-  const handleOverlayMouseMove = (e: KonvaEventObject<MouseEvent>) => {
+  const handleOverlayMouseMove = useCallback((e: KonvaEventObject<MouseEvent>) => {
     e.cancelBubble = true;
     const pinId = getPinAtPointer(e);
     if (pinId !== hoveredPin) {
@@ -126,19 +161,19 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
         handlePinMouseLeave();
       }
     }
-  };
+  }, [hoveredPin, component.id, handlePinMouseEnter, handlePinMouseLeave]);
 
-  const handleOverlayMouseLeave = (e: KonvaEventObject<MouseEvent>) => {
+  const handleOverlayMouseLeave = useCallback((e: KonvaEventObject<MouseEvent>) => {
     e.cancelBubble = true;
     setHoveredPin(null);
     document.body.style.cursor = 'default';
     handlePinMouseLeave();
-  };
+  }, [handlePinMouseLeave]);
 
-  const handleOverlayMouseDown = (e: KonvaEventObject<MouseEvent>) => {
+  const handleOverlayMouseDown = useCallback((e: KonvaEventObject<MouseEvent>) => {
     const pinId = getPinAtPointer(e);
     if (pinId) onPinMouseDown(e, pinId);
-  };
+  }, [onPinMouseDown]);
 
   const w = 4.6;
   const h = 4.6;
@@ -161,11 +196,10 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
         handlePinMouseLeave();
       }}
     >
-      {/* Invisible Hitbox */}
       <Rect x={-4} y={-4} width={208} height={148} fill="transparent" />
 
-      {/* ── PCB GRAPHICS (listening={false} on Group propagates to all children) ── */}
-      <Group scaleX={sx} scaleY={sy} listening={false}>
+      {/* ── STATIC PCB GRAPHICS (CACHED) ── */}
+      <Group ref={pcbGroupRef} scaleX={sx} scaleY={sy} listening={false}>
         <Path
           data="M 12,0 L 715,0 L 765,50 L 765,490 L 745,510 L 745,540 L 160,540 Q 150,540 145,530 L 135,515 Q 125,505 110,505 L 12,505 Q 0,505 0,493 L 0,12 Q 0,0 12,0 Z"
           fill="#1d70b8"
@@ -255,55 +289,34 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
         <Rect x={424} y={26} width={152} height={28} fill="#1f2937" stroke="#404040" strokeWidth={1} cornerRadius={4} />
         <Rect x={296} y={486} width={152} height={28} fill="#1f2937" stroke="#404040" strokeWidth={1} cornerRadius={4} />
         <Rect x={460} y={486} width={116} height={28} fill="#1f2937" stroke="#404040" strokeWidth={1} cornerRadius={4} />
-        <Group x={331} y={141}>
-          <Rect width={18} height={14} fill="#262626" stroke="#737373" strokeWidth={1.5} cornerRadius={4} />
-          <Rect x={2.5} y={2.5} width={13} height={9} cornerRadius={2}
-            fill={getPinVoltage('D13') > 2.5 ? '#fbbf24' : '#171717'}
-            shadowColor={getPinVoltage('D13') > 2.5 ? '#fbbf24' : 'transparent'}
-            shadowBlur={getPinVoltage('D13') > 2.5 ? 16 : 0}
-          />
-        </Group>
-        <Group x={331} y={200}>
-          <Rect width={18} height={14} fill="#262626" stroke="#737373" strokeWidth={1.5} cornerRadius={4} />
-          <Rect x={2.5} y={2.5} width={13} height={9} cornerRadius={2}
-            fill={getPinVoltage('TX') > 1 ? '#facc15' : '#171717'}
-            shadowColor={getPinVoltage('TX') > 1 ? '#facc15' : 'transparent'}
-            shadowBlur={getPinVoltage('TX') > 1 ? 14 : 0}
-          />
-        </Group>
-        <Group x={331} y={214}>
-          <Rect width={18} height={14} fill="#262626" stroke="#737373" strokeWidth={1.5} cornerRadius={4} />
-          <Rect x={2.5} y={2.5} width={13} height={9} cornerRadius={2}
-            fill={getPinVoltage('RX') > 1 ? '#facc15' : '#171717'}
-            shadowColor={getPinVoltage('RX') > 1 ? '#facc15' : 'transparent'}
-            shadowBlur={getPinVoltage('RX') > 1 ? 14 : 0}
-          />
-        </Group>
+        
+        {/* Base rectangles for LEDs */}
+        <Group x={331} y={141}><Rect width={18} height={14} fill="#262626" stroke="#737373" strokeWidth={1.5} cornerRadius={4} /></Group>
+        <Group x={331} y={200}><Rect width={18} height={14} fill="#262626" stroke="#737373" strokeWidth={1.5} cornerRadius={4} /></Group>
+        <Group x={331} y={214}><Rect width={18} height={14} fill="#262626" stroke="#737373" strokeWidth={1.5} cornerRadius={4} /></Group>
+        <Group x={681} y={141}><Rect width={18} height={14} fill="#262626" stroke="#737373" strokeWidth={1.5} cornerRadius={4} /></Group>
+        {/* ON LED is always on */}
         <Group x={681} y={141}>
-          <Rect width={18} height={14} fill="#262626" stroke="#737373" strokeWidth={1.5} cornerRadius={4} />
-          <Rect x={2.5} y={2.5} width={13} height={9} cornerRadius={2}
-            fill="#22c55e" shadowColor="#22c55e" shadowBlur={16}
-          />
+          <Rect x={2.5} y={2.5} width={13} height={9} cornerRadius={2} fill="#22c55e" shadowColor="#22c55e" shadowBlur={16} />
         </Group>
       </Group>
 
-      {/* ── PIN VISUALS (listening={false}) ─────────────────────────────────────
-       *  These are purely decorative — they show the pin dot, glow, label, and
-       *  tooltip. No hit testing here at all; all hover state comes from the
-       *  overlay rects below via pointer-position math.
-       */}
+      {/* ── DYNAMIC LED GRAPHICS (NOT CACHED) ── */}
+      <Group scaleX={sx} scaleY={sy} listening={false}>
+        <Group x={331} y={141}>
+          <Rect ref={d13Ref} x={2.5} y={2.5} width={13} height={9} cornerRadius={2} fill="#171717" />
+        </Group>
+        <Group x={331} y={200}>
+          <Rect ref={txRef} x={2.5} y={2.5} width={13} height={9} cornerRadius={2} fill="#171717" />
+        </Group>
+        <Group x={331} y={214}>
+          <Rect ref={rxRef} x={2.5} y={2.5} width={13} height={9} cornerRadius={2} fill="#171717" />
+        </Group>
+      </Group>
+
+      {/* ── PIN VISUALS ── */}
       {pinList.map(pin => {
         const isHovered = hoveredPin === pin.id;
-        const voltage = getPinVoltage(pin.id);
-        const isHigh = voltage > 2.5;
-
-        let fillCol = '#171717';
-        let glowCol = 'transparent';
-        if (isHigh && (pin.type === 'digital' || pin.type === 'PWM' || pin.type === 'power')) {
-          fillCol = '#22d3ee';
-          glowCol = '#22d3ee';
-        }
-
         const isNC = pin.id.startsWith('NC');
         const isTop = pin.position.y < 70;
 
@@ -314,7 +327,6 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
             y={pin.position.y - h / 2}
             listening={false}
           >
-            {/* Visible pin body */}
             <Rect
               x={isHovered ? -0.8 : 0}
               y={isHovered ? -0.8 : 0}
@@ -327,15 +339,12 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
               shadowColor={isHovered ? '#fbbf24' : 'transparent'}
               shadowBlur={isHovered ? 5 : 0}
             />
-            {/* Inner metal core */}
             <Circle
+              ref={(node) => { if (node) pinRefs.current[pin.id] = node; }}
               x={w / 2} y={h / 2}
               radius={isHovered ? 1.6 : 1}
-              fill={fillCol}
-              shadowColor={glowCol}
-              shadowBlur={glowCol !== 'transparent' ? 3 : 0}
+              fill="#171717"
             />
-            {/* Label */}
             {!isNC && pin.id !== 'SCL' && pin.id !== 'SDA' && (
               <Text
                 text={pin.label}
@@ -347,71 +356,32 @@ export const ArduinoUno: React.FC<ArduinoUnoProps> = ({ component }) => {
                 offsetX={0} offsetY={1.5}
               />
             )}
-            {/* Tooltip */}
             {isHovered && !isNC && (
-              <Label
-                x={w / 2 + 5}
-                y={isTop ? h + 2 : -20}
-                opacity={1}
-              >
+              <Label x={w / 2 + 5} y={isTop ? h + 2 : -20} opacity={1}>
                 <Tag
                   fill="#1f2937" stroke="#4b5563" strokeWidth={0.5}
                   cornerRadius={2}
                   pointerDirection={isTop ? 'up' : 'down'}
                   pointerWidth={4} pointerHeight={4}
                 />
-                <Text
-                  text={`${pin.label} (${pin.type})`}
-                  fill="#ffffff" fontSize={8} padding={3}
-                />
+                <Text text={`${pin.label} (${pin.type})`} fill="#ffffff" fontSize={8} padding={3} />
               </Label>
             )}
           </Group>
         );
       })}
 
-      {/* ── HIT OVERLAY RECTS ────────────────────────────────────────────────────
-       *
-       *  Two large invisible rects cover the entire top and bottom pin rows.
-       *  onMouseMove fires once per frame at any zoom level (no tiny sub-pixel
-       *  shapes to miss). We invert the Group's absolute transform to convert
-       *  the stage pointer into local coordinates, then snap to the nearest pin.
-       *
-       *  These are rendered LAST so they sit on top of everything else in z-order
-       *  and reliably receive all pointer events.
-       */}
-
-      {/* Top DIGITAL (Group A+B) overlay — spans AREF(x≈60) to RX(x≈145), y≈[5,16] */}
-      <Rect
-        x={57} y={5.37}
-        width={92} height={10}
-        fill="rgba(0,0,0,0.001)"
-        onMouseMove={handleOverlayMouseMove}
-        onMouseLeave={handleOverlayMouseLeave}
-        onMouseDown={handleOverlayMouseDown}
-      />
-
-      {/* Bottom POWER block overlay — spans IOREF(x=78.20) to Vin(x=112.56), y≈[125,135] */}
-      <Rect
-        x={75.20} y={124.63}
-        width={40.36} height={10}
-        fill="rgba(0,0,0,0.001)"
-        onMouseMove={handleOverlayMouseMove}
-        onMouseLeave={handleOverlayMouseLeave}
-        onMouseDown={handleOverlayMouseDown}
-      />
-
-      {/* Bottom ANALOG IN block overlay — spans A0(x≈120) to A5(x≈145), y≈[125,135] */}
-      <Rect
-        x={117.26} y={124.63}
-        width={31.13} height={10}
-        fill="rgba(0,0,0,0.001)"
-        onMouseMove={handleOverlayMouseMove}
-        onMouseLeave={handleOverlayMouseLeave}
-        onMouseDown={handleOverlayMouseDown}
-      />
+      <Rect x={57} y={5.37} width={92} height={10} fill="rgba(0,0,0,0.001)" onMouseMove={handleOverlayMouseMove} onMouseLeave={handleOverlayMouseLeave} onMouseDown={handleOverlayMouseDown} />
+      <Rect x={75.20} y={124.63} width={40.36} height={10} fill="rgba(0,0,0,0.001)" onMouseMove={handleOverlayMouseMove} onMouseLeave={handleOverlayMouseLeave} onMouseDown={handleOverlayMouseDown} />
+      <Rect x={117.26} y={124.63} width={31.13} height={10} fill="rgba(0,0,0,0.001)" onMouseMove={handleOverlayMouseMove} onMouseLeave={handleOverlayMouseLeave} onMouseDown={handleOverlayMouseDown} />
     </Group>
   );
-};
-
-
+}, (prev, next) => {
+  return (
+    prev.component.position.x === next.component.position.x &&
+    prev.component.position.y === next.component.position.y &&
+    prev.component.rotation === next.component.rotation &&
+    JSON.stringify(prev.component.properties) === JSON.stringify(next.component.properties) &&
+    JSON.stringify(prev.component.pins) === JSON.stringify(next.component.pins)
+  );
+});

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { useComponentDropAnimation } from '../../../hooks/useComponentDropAnimation';
 import { Group, Rect, Circle, Label, Tag, Text, Line } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
@@ -12,67 +12,93 @@ interface PotentiometerProps {
   component: CircuitComponent;
 }
 
-export const Potentiometer: React.FC<PotentiometerProps> = ({ component }) => {
+export const Potentiometer = memo(({ component }: PotentiometerProps) => {
   const [hoveredPin, setHoveredPin] = useState<string | null>(null);
   const [isHoveringKnob, setIsHoveringKnob] = useState(false);
   const [isDraggingKnob, setIsDraggingKnob] = useState(false);
   const [localValue, setLocalValue] = useState(512);
   
   const outerGroupRef = useRef<Konva.Group>(null);
+  const knobRef = useRef<Konva.Group>(null);
+  const valTextRef = useRef<Konva.Text>(null);
+  const volTextRef = useRef<Konva.Text>(null);
+  const isDraggingRef = useRef(isDraggingKnob);
+  const localValueRef = useRef(localValue);
+
+  useEffect(() => {
+    isDraggingRef.current = isDraggingKnob;
+    localValueRef.current = localValue;
+  }, [isDraggingKnob, localValue]);
 
   const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = React.useContext(CanvasContext);
 
   const status = useSimulationStore((state) => state.status);
-  const compState = useSimulationStore((state) => state.componentStates[component.id]);
-  
-  const simValue = (compState as { value?: number })?.value ?? 512;
-  const simVoltage = (compState as { voltage?: number })?.voltage ?? 0;
 
-  const displayValue = isDraggingKnob ? localValue : simValue;
+  useEffect(() => {
+    const unsubscribe = useSimulationStore.subscribe(
+      (state) => state.componentStates[component.id],
+      (compState: any) => {
+        const simValue = compState?.value ?? 512;
+        const simVoltage = compState?.voltage ?? 0;
+        
+        const displayValue = isDraggingRef.current ? localValueRef.current : simValue;
+        const angle = ((displayValue / 1023) * 270) - 135;
+        
+        if (knobRef.current) knobRef.current.rotation(angle);
+        if (valTextRef.current) valTextRef.current.text(Math.round(displayValue).toString());
+        if (volTextRef.current) volTextRef.current.text(`${simVoltage.toFixed(2)}V`);
+      }
+    );
+    return unsubscribe;
+  }, [component.id]);
 
-  const handleDragStart = () => {
+  const getDisplayValue = () => isDraggingKnob ? localValue : (useSimulationStore.getState().componentStates[component.id] as any)?.value ?? 512;
+
+  const handleDragStart = useCallback(() => {
     useWorkspaceStore.getState().pushHistory();
-  };
+  }, []);
 
-  const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragMove = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
 
-  const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragEnd = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
 
-  const handleClick = (e: KonvaEventObject<MouseEvent>) => {
+  const handleClick = useCallback((e: KonvaEventObject<MouseEvent>) => {
     useWorkspaceStore.getState().selectComponent(component.id, e.evt.shiftKey);
-  };
+  }, [component.id]);
 
-  const onPinMouseDown = (e: KonvaEventObject<MouseEvent>, pinId: string) => {
+  const onPinMouseDown = useCallback((e: KonvaEventObject<MouseEvent>, pinId: string) => {
     e.cancelBubble = true;
     handlePinMouseDown({ componentId: component.id, pinId });
-  };
+  }, [component.id, handlePinMouseDown]);
 
-  const notifyValueChange = (val: number) => {
+  const notifyValueChange = useCallback((val: number) => {
     window.dispatchEvent(new CustomEvent('EXTERNAL_INPUT', {
       detail: { componentId: component.id, type: 'potentiometer', value: val }
     }));
-  };
+  }, [component.id]);
 
-  const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
+  const handleWheel = useCallback((e: KonvaEventObject<WheelEvent>) => {
     e.cancelBubble = true;
     if (status !== 'RUNNING') return;
     
     const delta = e.evt.deltaY < 0 ? 30 : -30;
-    const newVal = Math.max(0, Math.min(1023, displayValue + delta));
+    const currentVal = getDisplayValue();
+    const newVal = Math.max(0, Math.min(1023, currentVal + delta));
     setLocalValue(newVal);
+    if (knobRef.current) knobRef.current.rotation(((newVal / 1023) * 270) - 135);
     notifyValueChange(newVal);
-  };
+  }, [status, notifyValueChange]);
 
-  const handleKnobMouseDown = (e: KonvaEventObject<MouseEvent>) => {
+  const handleKnobMouseDown = useCallback((e: KonvaEventObject<MouseEvent>) => {
     if (status !== 'RUNNING') return;
     e.cancelBubble = true;
     setIsDraggingKnob(true);
-    setLocalValue(displayValue);
-  };
+    setLocalValue(getDisplayValue());
+  }, [status]);
 
   useEffect(() => {
     if (!isDraggingKnob) return;
@@ -99,6 +125,7 @@ export const Potentiometer: React.FC<PotentiometerProps> = ({ component }) => {
       
       const newValue = Math.round(((relAngle + 135) / 270) * 1023);
       setLocalValue(newValue);
+      if (knobRef.current) knobRef.current.rotation(((newValue / 1023) * 270) - 135);
       notifyValueChange(newValue);
     };
 
@@ -112,7 +139,7 @@ export const Potentiometer: React.FC<PotentiometerProps> = ({ component }) => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDraggingKnob, component.id]);
+  }, [isDraggingKnob, component.id, notifyValueChange]);
 
   const renderPins = () => {
     return Object.values(component.pins).map((pin) => {
@@ -159,7 +186,8 @@ export const Potentiometer: React.FC<PotentiometerProps> = ({ component }) => {
     });
   };
 
-  const angle = ((displayValue / 1023) * 270) - 135;
+  const initialDisplayValue = getDisplayValue();
+  const initialAngle = ((initialDisplayValue / 1023) * 270) - 135;
 
   return (
     <Group
@@ -196,7 +224,7 @@ export const Potentiometer: React.FC<PotentiometerProps> = ({ component }) => {
         onMouseDown={handleKnobMouseDown}
       >
         <Circle x={0} y={0} radius={14} fill="#333333" stroke="#525252" strokeWidth={1} />
-        <Group rotation={angle}>
+        <Group ref={knobRef} rotation={initialAngle}>
           <Line points={[0, -2, 0, -12]} stroke="#fbbf24" strokeWidth={2} lineCap="round" />
         </Group>
       </Group>
@@ -210,15 +238,19 @@ export const Potentiometer: React.FC<PotentiometerProps> = ({ component }) => {
 
       {status === 'RUNNING' && (
         <Group x={25} y={50}>
-          <Text text={Math.round(displayValue).toString()} fill="#60a5fa" fontSize={10} align="center" offsetX={15} width={30} />
-          <Text text={`${simVoltage.toFixed(2)}V`} fill="#34d399" fontSize={10} align="center" y={12} offsetX={15} width={30} />
+          <Text ref={valTextRef} text={Math.round(initialDisplayValue).toString()} fill="#60a5fa" fontSize={10} align="center" offsetX={15} width={30} />
+          <Text ref={volTextRef} text="0.00V" fill="#34d399" fontSize={10} align="center" y={12} offsetX={15} width={30} />
         </Group>
       )}
 
       {renderPins()}
     </Group>
   );
-};
-
-
-
+}, (prev, next) => {
+  return (
+    prev.component.position.x === next.component.position.x &&
+    prev.component.position.y === next.component.position.y &&
+    prev.component.rotation === next.component.rotation &&
+    JSON.stringify(prev.component.properties) === JSON.stringify(next.component.properties)
+  );
+});

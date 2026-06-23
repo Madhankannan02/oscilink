@@ -173,8 +173,11 @@ function simulationLoop() {
 
   let cyclesToRun = Math.floor(elapsed * 16000);
 
-  if (cyclesToRun > 16000000) {
-    cyclesToRun = 16000000;
+  // Cap to ~30ms worth of cycles per frame to prevent worker thread lockup
+  // (death spirals when simulation falls behind real-time)
+  const MAX_CYCLES_PER_FRAME = 500000;
+  if (cyclesToRun > MAX_CYCLES_PER_FRAME) {
+    cyclesToRun = MAX_CYCLES_PER_FRAME;
   }
 
   if (avrRunner) {

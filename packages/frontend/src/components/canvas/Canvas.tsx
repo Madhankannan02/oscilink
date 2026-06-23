@@ -312,7 +312,7 @@ export const Canvas: React.FC<{ rightPanelOpen?: boolean }> = ({ rightPanelOpen 
             handlePinMouseLeave
           }}>
             {/* Layer 2: Component layer */}
-            <ComponentLayer />
+            <ComponentLayer dimensions={dimensions} />
 
             {/* Layer 2.5: Error Highlights */}
             <ErrorHighlightLayer />

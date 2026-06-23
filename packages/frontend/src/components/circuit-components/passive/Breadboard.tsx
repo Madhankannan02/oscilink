@@ -1,6 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef, useEffect, useCallback, memo } from 'react';
 import { Group, Rect, Shape, Circle, Line, Text } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
+import Konva from 'konva';
 import { CircuitComponent, Point } from '../../../types/components';
 import { useWorkspaceStore } from '../../../store/workspaceStore';
 import { getAbsolutePinPosition } from '../../../utils/geometry';
@@ -11,18 +12,24 @@ interface BreadboardProps {
   component: CircuitComponent;
 }
 
-export const Breadboard: React.FC<BreadboardProps> = ({ component }) => {
+export const Breadboard = memo(({ component }: BreadboardProps) => {
   // State
   const [hoveredPin, setHoveredPin] = useState<string | null>(null);
   
   // Context
   const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = useContext(CanvasContext);
   
-  // Store reads
-  const pinVoltages = useSimulationStore(s => s.pinVoltages);
   const components = useWorkspaceStore(s => s.components);
   
-  const outerGroupRef = React.useRef<any>(null);
+  const outerGroupRef = useRef<Konva.Group>(null);
+  const pcbGroupRef = useRef<Konva.Group>(null);
+
+  const topPosRectRef = useRef<Konva.Rect>(null);
+  const topPosTextRef = useRef<Konva.Text>(null);
+  const topNegRectRef = useRef<Konva.Rect>(null);
+  const bottomPosRectRef = useRef<Konva.Rect>(null);
+  const bottomPosTextRef = useRef<Konva.Text>(null);
+  const bottomNegRectRef = useRef<Konva.Rect>(null);
 
   // Compute implicitly connected pins
   const connectedPins = React.useMemo(() => {
@@ -49,11 +56,41 @@ export const Breadboard: React.FC<BreadboardProps> = ({ component }) => {
     return connected;
   }, [components, component]);
 
-  // Derived voltages (check first pin of rails)
-  const topPosV = pinVoltages[`${component.id}-TP_0`] || 0;
-  const topNegV = pinVoltages[`${component.id}-TN_0`] || 0;
-  const bottomPosV = pinVoltages[`${component.id}-BP_0`] || 0;
-  const bottomNegV = pinVoltages[`${component.id}-BN_0`] || 0;
+  // Caching the static parts including the holes
+  useEffect(() => {
+    if (pcbGroupRef.current) {
+      pcbGroupRef.current.clearCache();
+      pcbGroupRef.current.cache({ pixelRatio: 2 });
+    }
+  }, [component.rotation, connectedPins]);
+
+  // Update voltages via refs
+  useEffect(() => {
+    const unsubscribe = useSimulationStore.subscribe(
+      (state) => state.pinVoltages,
+      (voltages) => {
+        const topPosV = voltages[`${component.id}-TP_0`] || voltages[`${component.id}:TP_0`] || 0;
+        const topNegV = voltages[`${component.id}-TN_0`] || voltages[`${component.id}:TN_0`] || 0;
+        const bottomPosV = voltages[`${component.id}-BP_0`] || voltages[`${component.id}:BP_0`] || 0;
+        const bottomNegV = voltages[`${component.id}-BN_0`] || voltages[`${component.id}:BN_0`] || 0;
+
+        if (topPosRectRef.current) topPosRectRef.current.fill(topPosV > 0 ? '#fca5a5' : '#fee2e2');
+        if (topPosTextRef.current) {
+          topPosTextRef.current.text(topPosV > 0 ? `${topPosV}V` : '');
+        }
+
+        if (topNegRectRef.current) topNegRectRef.current.fill(topNegV === 0 ? '#eff6ff' : '#eff6ff');
+
+        if (bottomPosRectRef.current) bottomPosRectRef.current.fill(bottomPosV > 0 ? '#fca5a5' : '#fee2e2');
+        if (bottomPosTextRef.current) {
+          bottomPosTextRef.current.text(bottomPosV > 0 ? `${bottomPosV}V` : '');
+        }
+
+        if (bottomNegRectRef.current) bottomNegRectRef.current.fill(bottomNegV === 0 ? '#eff6ff' : '#eff6ff');
+      }
+    );
+    return unsubscribe;
+  }, [component.id]);
 
   const getPinAtPointer = (e: KonvaEventObject<MouseEvent>): string | null => {
     const stage = e.target.getStage();
@@ -83,27 +120,26 @@ export const Breadboard: React.FC<BreadboardProps> = ({ component }) => {
     return closest;
   };
   
-  // Handlers
-  const handleDragStart = () => {
+  const handleDragStart = useCallback(() => {
     useWorkspaceStore.getState().pushHistory();
-  };
+  }, []);
   
-  const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragMove = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
   
-  const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragEnd = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
   
-  const handleClick = (e: KonvaEventObject<MouseEvent>) => {
+  const handleClick = useCallback((e: KonvaEventObject<MouseEvent>) => {
     useWorkspaceStore.getState().selectComponent(component.id, e.evt.shiftKey);
-  };
+  }, [component.id]);
   
-  const onPinMouseDown = (e: KonvaEventObject<MouseEvent>, pinId: string) => {
+  const onPinMouseDown = useCallback((e: KonvaEventObject<MouseEvent>, pinId: string) => {
     e.cancelBubble = true;
     handlePinMouseDown({ componentId: component.id, pinId });
-  };
+  }, [component.id, handlePinMouseDown]);
 
   return (
     <Group
@@ -118,113 +154,82 @@ export const Breadboard: React.FC<BreadboardProps> = ({ component }) => {
       onClick={handleClick}
       onTap={handleClick}
     >
-      {/* Main board background */}
-      <Rect
-        width={330} height={180}
-        fill="#f5f0e8"
-        stroke="#d4c9b0" strokeWidth={1}
-        cornerRadius={4}
-      />
-      
-      {/* TOP POSITIVE RAIL */}
-      <Rect x={8} y={3} width={314} height={4}
-        fill={topPosV > 0 ? '#fca5a5' : '#fee2e2'} />
-      <Line points={[24, 5, 322, 5]}
-        stroke="#dc2626" strokeWidth={0.5} />
-      <Text x={14} y={1} text="+" fontSize={8}
-        fill="#dc2626" fontStyle="bold" />
-      {topPosV > 0 && (
-        <Text x={305} y={2} text={`${topPosV}V`}
-          fontSize={5} fill="#dc2626" fontStyle="bold" />
-      )}
-      
-      {/* TOP NEGATIVE RAIL */}
-      <Rect x={8} y={13} width={314} height={4}
-        fill={topNegV === 0 ? '#eff6ff' : '#eff6ff'} />
-      <Line points={[24, 15, 322, 15]}
-        stroke="#2563eb" strokeWidth={0.5} />
-      <Text x={14} y={11} text="−" fontSize={8}
-        fill="#2563eb" fontStyle="bold" />
-      
-      {/* SEPARATOR LINE 1 */}
-      <Line points={[8, 30, 322, 30]}
-        stroke="#d4c9b0" strokeWidth={1} />
-      
-      {/* ROW LABELS LEFT SIDE */}
-      {['a','b','c','d','e'].map((letter, i) => (
-        <Text key={letter} x={10} y={37 + i * 10}
-          text={letter} fontSize={5} fill="#9ca3af" />
-      ))}
-      {['f','g','h','i','j'].map((letter, i) => (
-        <Text key={letter} x={10} y={97 + i * 10}
-          text={letter} fontSize={5} fill="#9ca3af" />
-      ))}
-      
-      {/* COLUMN NUMBERS — only show 1, 5, 10, 15, 20, 25, 30 */}
-      {[0, 4, 9, 14, 19, 24, 29].map(colIndex => (
-        <Text
-          key={colIndex}
-          x={20 + colIndex * 10 - 3}
-          y={31}
-          text={String(colIndex + 1)}
-          fontSize={4} fill="#9ca3af"
+      <Group ref={pcbGroupRef} listening={false}>
+        {/* Main board background */}
+        <Rect
+          width={330} height={180}
+          fill="#f5f0e8"
+          stroke="#d4c9b0" strokeWidth={1}
+          cornerRadius={4}
         />
-      ))}
-      
-      {/* CENTER GAP */}
-      <Rect x={0} y={85} width={330} height={10}
-        fill="#e8e0d0" />
-      <Line points={[8, 90, 322, 90]}
-        stroke="#c8bda8" strokeWidth={1} dash={[4, 4]} />
-      
-      {/* SEPARATOR LINE 2 */}
-      <Line points={[8, 150, 322, 150]}
-        stroke="#d4c9b0" strokeWidth={1} />
-      
-      {/* BOTTOM POSITIVE RAIL */}
-      <Rect x={8} y={153} width={314} height={4}
-        fill={bottomPosV > 0 ? '#fca5a5' : '#fee2e2'} />
-      <Line points={[24, 155, 322, 155]}
-        stroke="#dc2626" strokeWidth={0.5} />
-      <Text x={14} y={151} text="+" fontSize={8}
-        fill="#dc2626" fontStyle="bold" />
-      {bottomPosV > 0 && (
-        <Text x={305} y={152} text={`${bottomPosV}V`}
-          fontSize={5} fill="#dc2626" fontStyle="bold" />
-      )}
-      
-      {/* BOTTOM NEGATIVE RAIL */}
-      <Rect x={8} y={163} width={314} height={4}
-        fill={bottomNegV === 0 ? '#eff6ff' : '#eff6ff'} />
-      <Line points={[24, 165, 322, 165]}
-        stroke="#2563eb" strokeWidth={0.5} />
-      <Text x={14} y={161} text="−" fontSize={8}
-        fill="#2563eb" fontStyle="bold" />
-      
-      {/* ALL HOLES — rendered via single Shape for performance */}
-      <Shape
-        sceneFunc={(ctx) => {
-          Object.values(component.pins).forEach((pin) => {
-            ctx.beginPath();
-            ctx.arc(pin.position.x, pin.position.y, 2.5, 0, Math.PI * 2);
-            ctx.fillStyle = '#c8bda8';
-            ctx.fill();
-            ctx.strokeStyle = '#a09080';
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-
-            // Draw connection glow if implicitly connected
-            if (connectedPins.has(pin.id)) {
+        
+        <Line points={[24, 5, 322, 5]} stroke="#dc2626" strokeWidth={0.5} />
+        <Text x={14} y={1} text="+" fontSize={8} fill="#dc2626" fontStyle="bold" />
+        
+        <Line points={[24, 15, 322, 15]} stroke="#2563eb" strokeWidth={0.5} />
+        <Text x={14} y={11} text="−" fontSize={8} fill="#2563eb" fontStyle="bold" />
+        
+        <Line points={[8, 30, 322, 30]} stroke="#d4c9b0" strokeWidth={1} />
+        
+        {['a','b','c','d','e'].map((letter, i) => (
+          <Text key={letter} x={10} y={37 + i * 10} text={letter} fontSize={5} fill="#9ca3af" />
+        ))}
+        {['f','g','h','i','j'].map((letter, i) => (
+          <Text key={letter} x={10} y={97 + i * 10} text={letter} fontSize={5} fill="#9ca3af" />
+        ))}
+        
+        {[0, 4, 9, 14, 19, 24, 29].map(colIndex => (
+          <Text
+            key={colIndex}
+            x={20 + colIndex * 10 - 3}
+            y={31}
+            text={String(colIndex + 1)}
+            fontSize={4} fill="#9ca3af"
+          />
+        ))}
+        
+        <Rect x={0} y={85} width={330} height={10} fill="#e8e0d0" />
+        <Line points={[8, 90, 322, 90]} stroke="#c8bda8" strokeWidth={1} dash={[4, 4]} />
+        <Line points={[8, 150, 322, 150]} stroke="#d4c9b0" strokeWidth={1} />
+        
+        <Line points={[24, 155, 322, 155]} stroke="#dc2626" strokeWidth={0.5} />
+        <Text x={14} y={151} text="+" fontSize={8} fill="#dc2626" fontStyle="bold" />
+        
+        <Line points={[24, 165, 322, 165]} stroke="#2563eb" strokeWidth={0.5} />
+        <Text x={14} y={161} text="−" fontSize={8} fill="#2563eb" fontStyle="bold" />
+        
+        <Shape
+          sceneFunc={(ctx) => {
+            Object.values(component.pins).forEach((pin) => {
               ctx.beginPath();
-              ctx.arc(pin.position.x, pin.position.y, 4, 0, Math.PI * 2);
-              ctx.strokeStyle = '#22c55e'; // Bright green
-              ctx.lineWidth = 2;
+              ctx.arc(pin.position.x, pin.position.y, 2.5, 0, Math.PI * 2);
+              ctx.fillStyle = '#c8bda8';
+              ctx.fill();
+              ctx.strokeStyle = '#a09080';
+              ctx.lineWidth = 0.5;
               ctx.stroke();
-            }
-          });
-        }}
-        listening={false}
-      />
+
+              if (connectedPins.has(pin.id)) {
+                ctx.beginPath();
+                ctx.arc(pin.position.x, pin.position.y, 4, 0, Math.PI * 2);
+                ctx.strokeStyle = '#22c55e';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+              }
+            });
+          }}
+        />
+      </Group>
+
+      {/* DYNAMIC RAILS */}
+      <Group listening={false}>
+        <Rect ref={topPosRectRef} x={8} y={3} width={314} height={4} fill="#fee2e2" />
+        <Text ref={topPosTextRef} x={305} y={2} text="" fontSize={5} fill="#dc2626" fontStyle="bold" />
+        <Rect ref={topNegRectRef} x={8} y={13} width={314} height={4} fill="#eff6ff" />
+        <Rect ref={bottomPosRectRef} x={8} y={153} width={314} height={4} fill="#fee2e2" />
+        <Text ref={bottomPosTextRef} x={305} y={152} text="" fontSize={5} fill="#dc2626" fontStyle="bold" />
+        <Rect ref={bottomNegRectRef} x={8} y={163} width={314} height={4} fill="#eff6ff" />
+      </Group>
       
       {/* PIN HOVER HIGHLIGHTS */}
       {hoveredPin && component.pins[hoveredPin] && (
@@ -286,4 +291,11 @@ export const Breadboard: React.FC<BreadboardProps> = ({ component }) => {
       />
     </Group>
   );
-};
+}, (prev, next) => {
+  return (
+    prev.component.position.x === next.component.position.x &&
+    prev.component.position.y === next.component.position.y &&
+    prev.component.rotation === next.component.rotation &&
+    JSON.stringify(prev.component.properties) === JSON.stringify(next.component.properties)
+  );
+});

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback, memo } from 'react';
 import { useComponentDropAnimation } from '../../../hooks/useComponentDropAnimation';
 import { Group, Rect, Line, Circle, Text, Shape } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
@@ -32,33 +32,33 @@ function getResistorBands(resistance: number): string[] {
   return [colors[first], colors[second], colors[mult], gold];
 }
 
-export const Resistor: React.FC<ResistorProps> = ({ component }) => {
+export const Resistor = memo(({ component }: ResistorProps) => {
   const [hoveredPin, setHoveredPin] = useState<string | null>(null);
   const outerGroupRef = useRef<any>(null);
   useComponentDropAnimation(component, outerGroupRef);
 
   const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = React.useContext(CanvasContext);
 
-  const handleDragStart = () => {
+  const handleDragStart = useCallback(() => {
     useWorkspaceStore.getState().pushHistory();
-  };
+  }, []);
 
-  const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragMove = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
 
-  const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragEnd = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
 
-  const handleClick = (e: KonvaEventObject<MouseEvent>) => {
+  const handleClick = useCallback((e: KonvaEventObject<MouseEvent>) => {
     useWorkspaceStore.getState().selectComponent(component.id, e.evt.shiftKey);
-  };
+  }, [component.id]);
 
-  const onPinMouseDown = (e: KonvaEventObject<MouseEvent>, pinId: string) => {
+  const onPinMouseDown = useCallback((e: KonvaEventObject<MouseEvent>, pinId: string) => {
     e.cancelBubble = true;
     handlePinMouseDown({ componentId: component.id, pinId });
-  };
+  }, [component.id, handlePinMouseDown]);
 
   const resistance = Number(component.properties?.resistance || 220);
   const bands = getResistorBands(resistance);
@@ -220,4 +220,11 @@ export const Resistor: React.FC<ResistorProps> = ({ component }) => {
       {renderPins()}
     </Group>
   );
-};
+}, (prev, next) => {
+  return (
+    prev.component.position.x === next.component.position.x &&
+    prev.component.position.y === next.component.position.y &&
+    prev.component.rotation === next.component.rotation &&
+    JSON.stringify(prev.component.properties) === JSON.stringify(next.component.properties)
+  );
+});

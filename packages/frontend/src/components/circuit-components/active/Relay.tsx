@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { Group, Rect, Circle, Text, Line } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
+import Konva from 'konva';
 import { CircuitComponent } from '../../../types/components';
 import { useWorkspaceStore } from '../../../store/workspaceStore';
 import { useSimulationStore } from '../../../store/simulationStore';
@@ -12,33 +13,45 @@ interface RelayProps {
 
 const COMMONLY_USED_PINS = ['IN', 'VCC', 'GND', 'NO', 'COM', 'NC'];
 
-export const Relay: React.FC<RelayProps> = ({ component }) => {
+export const Relay = memo(({ component }: RelayProps) => {
   const [hoveredPin, setHoveredPin] = useState<string | null>(null);
   const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = React.useContext(CanvasContext);
 
-  const compState = useSimulationStore((state) => state.componentStates[component.id]) as any;
-  const isActivated = compState?.isActivated ?? false;
+  const ledRef = useRef<Konva.Rect>(null);
 
-  const handleDragStart = () => {
+  useEffect(() => {
+    const unsubscribe = useSimulationStore.subscribe(
+      (state) => state.componentStates[component.id],
+      (compState: any) => {
+        const isActivated = compState?.isActivated ?? false;
+        if (ledRef.current) {
+          ledRef.current.fill(isActivated ? "#ef4444" : "#4b5563");
+        }
+      }
+    );
+    return unsubscribe;
+  }, [component.id]);
+
+  const handleDragStart = useCallback(() => {
     useWorkspaceStore.getState().pushHistory();
-  };
+  }, []);
 
-  const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragMove = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
 
-  const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragEnd = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
 
-  const handleClick = (e: KonvaEventObject<MouseEvent>) => {
+  const handleClick = useCallback((e: KonvaEventObject<MouseEvent>) => {
     useWorkspaceStore.getState().selectComponent(component.id, e.evt.shiftKey);
-  };
+  }, [component.id]);
 
-  const onPinMouseDown = (e: KonvaEventObject<MouseEvent>, pinId: string) => {
+  const onPinMouseDown = useCallback((e: KonvaEventObject<MouseEvent>, pinId: string) => {
     e.cancelBubble = true;
     handlePinMouseDown({ componentId: component.id, pinId });
-  };
+  }, [component.id, handlePinMouseDown]);
 
   const renderPins = () => {
     return Object.values(component.pins).map((pin) => {
@@ -175,7 +188,7 @@ export const Relay: React.FC<RelayProps> = ({ component }) => {
 
         {/* Bottom Left LED */}
         <Text text="ON_Led" x={4} y={85} fontSize={5} fill="#ffffff" />
-        <Rect x={8} y={92} width={6} height={4} fill={isActivated ? "#ef4444" : "#4b5563"} />
+        <Rect ref={ledRef} x={8} y={92} width={6} height={4} fill="#4b5563" />
 
         {/* Bottom Right Header block */}
         <Rect x={35} y={85} width={30} height={15} stroke="#ffffff" strokeWidth={0.5} />
@@ -190,7 +203,11 @@ export const Relay: React.FC<RelayProps> = ({ component }) => {
       {renderPins()}
     </Group>
   );
-};
-
-
-
+}, (prev, next) => {
+  return (
+    prev.component.position.x === next.component.position.x &&
+    prev.component.position.y === next.component.position.y &&
+    prev.component.rotation === next.component.rotation &&
+    JSON.stringify(prev.component.properties) === JSON.stringify(next.component.properties)
+  );
+});

@@ -1,6 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { Group, Rect, Circle, Text, Line } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
+import Konva from 'konva';
 import { CircuitComponent } from '../../../types/components';
 import { useWorkspaceStore } from '../../../store/workspaceStore';
 import { useSimulationStore } from '../../../store/simulationStore';
@@ -10,38 +11,54 @@ interface TemperatureSensorProps {
   component: CircuitComponent;
 }
 
-export const TemperatureSensor: React.FC<TemperatureSensorProps> = ({ component }) => {
+export const TemperatureSensor = memo(({ component }: TemperatureSensorProps) => {
   const [hoveredPin, setHoveredPin] = useState<string | null>(null);
   const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = useContext(CanvasContext);
 
-  const componentState = useSimulationStore(
-    s => s.componentStates[component.id]
-  ) as any;
+  const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = React.useContext(CanvasContext);
 
-  const isActive = !!componentState?.isActive;
-  const temp = componentState?.temperatureCelsius ?? 25.0;
-  const humidity = componentState?.humidity ?? 60;
+  const displayGroupRef = useRef<Konva.Group>(null);
+  const inactiveIconRef = useRef<Konva.Group>(null);
+  const tempTextRef = useRef<Konva.Text>(null);
+  const humTextRef = useRef<Konva.Text>(null);
 
-  const handleDragStart = () => {
+  useEffect(() => {
+    const unsubscribe = useSimulationStore.subscribe(
+      (state) => state.componentStates[component.id],
+      (compState: any) => {
+        const isActive = !!compState?.isActive;
+        const temp = compState?.temperatureCelsius ?? 25.0;
+        const humidity = compState?.humidity ?? 60;
+
+        if (displayGroupRef.current) displayGroupRef.current.visible(isActive);
+        if (inactiveIconRef.current) inactiveIconRef.current.visible(!isActive);
+        if (tempTextRef.current) tempTextRef.current.text(`${temp.toFixed(1)}°C`);
+        if (humTextRef.current) humTextRef.current.text(`${humidity.toFixed(0)}%`);
+      }
+    );
+    return unsubscribe;
+  }, [component.id]);
+
+  const handleDragStart = useCallback(() => {
     useWorkspaceStore.getState().pushHistory();
-  };
+  }, []);
 
-  const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragMove = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
 
-  const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragEnd = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
 
-  const handleClick = (e: KonvaEventObject<MouseEvent>) => {
+  const handleClick = useCallback((e: KonvaEventObject<MouseEvent>) => {
     useWorkspaceStore.getState().selectComponent(component.id, e.evt.shiftKey);
-  };
+  }, [component.id]);
 
-  const onPinMouseDown = (e: KonvaEventObject<MouseEvent>, pinId: string) => {
+  const onPinMouseDown = useCallback((e: KonvaEventObject<MouseEvent>, pinId: string) => {
     e.cancelBubble = true;
     handlePinMouseDown({ componentId: component.id, pinId });
-  };
+  }, [component.id, handlePinMouseDown]);
 
   const COMMONLY_USED_PINS = ['VCC', 'DATA', 'GND'];
 
@@ -178,66 +195,66 @@ export const TemperatureSensor: React.FC<TemperatureSensorProps> = ({ component 
         ))}
 
         {/* Live Simulation Display Overlay */}
-        {isActive ? (
-          <Group>
-            <Rect
-              x={2}
-              y={14}
-              width={46}
-              height={28}
-              fill="rgba(0,0,0,0.75)"
-              cornerRadius={2}
-            />
-            <Text
-              x={2}
-              y={17}
-              width={46}
-              align="center"
-              text={`${temp.toFixed(1)}°C`}
-              fontSize={11}
-              fill="#ff6b6b"
-              fontFamily="monospace"
-              fontStyle="bold"
-            />
-            <Text
-              x={2}
-              y={31}
-              width={46}
-              align="center"
-              text={`${humidity.toFixed(0)}%`}
-              fontSize={9}
-              fill="#60a5fa"
-              fontFamily="monospace"
-            />
-          </Group>
-        ) : (
-          <Group>
-            {/* Sensor Face Circle */}
-            <Circle
-              x={25}
-              y={29}
-              radius={9}
-              fill="#1e3a8a"
-              stroke="#60a5fa"
-              strokeWidth={0.5}
-            />
+        <Group ref={displayGroupRef} visible={false}>
+          <Rect
+            x={2}
+            y={14}
+            width={46}
+            height={28}
+            fill="rgba(0,0,0,0.75)"
+            cornerRadius={2}
+          />
+          <Text
+            ref={tempTextRef}
+            x={2}
+            y={17}
+            width={46}
+            align="center"
+            text="25.0°C"
+            fontSize={11}
+            fill="#ff6b6b"
+            fontFamily="monospace"
+            fontStyle="bold"
+          />
+          <Text
+            ref={humTextRef}
+            x={2}
+            y={31}
+            width={46}
+            align="center"
+            text="60%"
+            fontSize={9}
+            fill="#60a5fa"
+            fontFamily="monospace"
+          />
+        </Group>
 
-            {/* Temperature Icon */}
-            <Circle
-              x={25}
-              y={29}
-              radius={4}
-              fill="none"
-              stroke="#93c5fd"
-              strokeWidth={1}
-            />
-            <Line
-              points={[25, 25, 25, 32]}
-              stroke="#93c5fd"
-              strokeWidth={1.5}
-            />
-          </Group>
-        )}
+        <Group ref={inactiveIconRef} visible={true}>
+          {/* Sensor Face Circle */}
+          <Circle
+            x={25}
+            y={29}
+            radius={9}
+            fill="#1e3a8a"
+            stroke="#60a5fa"
+            strokeWidth={0.5}
+          />
+
+          {/* Temperature Icon */}
+          <Circle
+            x={25}
+            y={29}
+            radius={4}
+            fill="none"
+            stroke="#93c5fd"
+            strokeWidth={1}
+          />
+          <Line
+            points={[25, 25, 25, 32]}
+            stroke="#93c5fd"
+            strokeWidth={1.5}
+          />
+        </Group>
 
         {/* Pin Label Area */}
         <Text
@@ -286,4 +303,11 @@ export const TemperatureSensor: React.FC<TemperatureSensorProps> = ({ component 
       {renderPins()}
     </Group>
   );
-};
+}, (prev, next) => {
+  return (
+    prev.component.position.x === next.component.position.x &&
+    prev.component.position.y === next.component.position.y &&
+    prev.component.rotation === next.component.rotation &&
+    JSON.stringify(prev.component.properties) === JSON.stringify(next.component.properties)
+  );
+});

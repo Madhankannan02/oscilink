@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { useComponentDropAnimation } from '../../../hooks/useComponentDropAnimation';
 import { Group, Rect, Path, Circle, Text } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
+import Konva from 'konva';
 import { CircuitComponent } from '../../../types/components';
 import { useWorkspaceStore } from '../../../store/workspaceStore';
 import { useSimulationStore } from '../../../store/simulationStore';
@@ -11,73 +12,19 @@ interface LEDProps {
   component: CircuitComponent;
 }
 
-export const LED: React.FC<LEDProps> = ({ component }) => {
+export const LED = memo(({ component }: LEDProps) => {
   const [hoveredPin, setHoveredPin] = useState<string | null>(null);
-  const outerGroupRef = useRef<any>(null);
+  const outerGroupRef = useRef<Konva.Group>(null);
+  const glowRef = useRef<Konva.Circle>(null);
+  const bodyGroupRef = useRef<Konva.Group>(null);
+  const domeRef = useRef<Konva.Path>(null);
+  const baseRef = useRef<Konva.Path>(null);
+  
   useComponentDropAnimation(component, outerGroupRef);
-  const [displayedBrightness, setDisplayedBrightness] = useState(0);
   const animFrameRef = useRef<number>();
 
   const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = React.useContext(CanvasContext);
-
-
-  const compState = useSimulationStore((state) => state.componentStates[component.id]);
-  const targetBrightness = (compState as { brightness?: number })?.brightness ?? 0;
   
-  // Animate brightness smoothly
-
-  useEffect(() => {
-    let currentBrightness = displayedBrightness;
-    
-    const animate = () => {
-      if (Math.abs(currentBrightness - targetBrightness) < 0.01) {
-        if (currentBrightness !== targetBrightness) {
-          currentBrightness = targetBrightness;
-          setDisplayedBrightness(currentBrightness);
-        }
-        return;
-      }
-      
-      const isTurningOn = targetBrightness > currentBrightness;
-      const step = isTurningOn ? 0.3 : 0.15;
-      
-      currentBrightness += (targetBrightness - currentBrightness) * step;
-      setDisplayedBrightness(currentBrightness);
-      
-      animFrameRef.current = requestAnimationFrame(animate);
-    };
-    
-    animFrameRef.current = requestAnimationFrame(animate);
-    
-    return () => {
-      if (animFrameRef.current) {
-        cancelAnimationFrame(animFrameRef.current);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetBrightness]);
-
-  const handleDragStart = () => {
-    useWorkspaceStore.getState().pushHistory();
-  };
-
-  const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
-    useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
-
-  const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
-    useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
-
-  const handleClick = (e: KonvaEventObject<MouseEvent>) => {
-    useWorkspaceStore.getState().selectComponent(component.id, e.evt.shiftKey);
-  };
-
-  const onPinMouseDown = (e: KonvaEventObject<MouseEvent>, pinId: string) => {
-    e.cancelBubble = true;
-    handlePinMouseDown({ componentId: component.id, pinId });
-  };
-
   const baseColor = String(component.properties?.color || 'RED').toUpperCase();
   const colorMap: Record<string, { r: number, g: number, b: number }> = {
     RED: { r: 255, g: 0, b: 0 },
@@ -86,18 +33,89 @@ export const LED: React.FC<LEDProps> = ({ component }) => {
     YELLOW: { r: 255, g: 255, b: 0 },
     WHITE: { r: 255, g: 255, b: 255 }
   };
-  
   const c = colorMap[baseColor] || colorMap.RED;
-  
-  const r = Math.floor(c.r * 0.3 + (c.r - c.r * 0.3) * displayedBrightness);
-  const g = Math.floor(c.g * 0.3 + (c.g - c.g * 0.3) * displayedBrightness);
-  const b = Math.floor(c.b * 0.3 + (c.b - c.b * 0.3) * displayedBrightness);
-  const currentColor = `rgb(${r}, ${g}, ${b})`;
+
+  // Animate brightness smoothly using refs
+  useEffect(() => {
+    let currentBrightness = 0;
+    let targetBrightness = 0;
+
+    const unsubscribe = useSimulationStore.subscribe(
+      (state) => (state.componentStates[component.id] as any)?.brightness ?? 0,
+      (newBrightness) => {
+        targetBrightness = newBrightness;
+      }
+    );
+    
+    const animate = () => {
+      if (Math.abs(currentBrightness - targetBrightness) >= 0.01) {
+        const isTurningOn = targetBrightness > currentBrightness;
+        const step = isTurningOn ? 0.3 : 0.15;
+        currentBrightness += (targetBrightness - currentBrightness) * step;
+        
+        // Directly update Konva nodes
+        const r = Math.floor(c.r * 0.3 + (c.r - c.r * 0.3) * currentBrightness);
+        const g = Math.floor(c.g * 0.3 + (c.g - c.g * 0.3) * currentBrightness);
+        const b = Math.floor(c.b * 0.3 + (c.b - c.b * 0.3) * currentBrightness);
+        const currentColor = `rgb(${r}, ${g}, ${b})`;
+
+        if (glowRef.current) {
+          if (currentBrightness > 0.05) {
+            glowRef.current.visible(true);
+            glowRef.current.fillRadialGradientColorStops([
+              0, `rgba(${c.r}, ${c.g}, ${c.b}, ${0.9 * currentBrightness})`,
+              0.4, `rgba(${c.r}, ${c.g}, ${c.b}, ${0.4 * currentBrightness})`,
+              1, 'rgba(0, 0, 0, 0)'
+            ]);
+          } else {
+            glowRef.current.visible(false);
+          }
+        }
+        
+        if (bodyGroupRef.current) {
+          bodyGroupRef.current.shadowBlur(currentBrightness > 0.05 ? 15 * currentBrightness : 0);
+          bodyGroupRef.current.shadowOpacity(currentBrightness);
+        }
+
+        if (domeRef.current) domeRef.current.fill(currentColor);
+        if (baseRef.current) baseRef.current.fill(currentColor);
+      }
+      
+      animFrameRef.current = requestAnimationFrame(animate);
+    };
+    
+    animFrameRef.current = requestAnimationFrame(animate);
+    
+    return () => {
+      unsubscribe();
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [component.id, c.r, c.g, c.b]);
+
+  const handleDragStart = useCallback(() => {
+    useWorkspaceStore.getState().pushHistory();
+  }, []);
+
+  const handleDragMove = useCallback((e: KonvaEventObject<DragEvent>) => {
+    useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
+  }, [component.id]);
+
+  const handleDragEnd = useCallback((e: KonvaEventObject<DragEvent>) => {
+    useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
+  }, [component.id]);
+
+  const handleClick = useCallback((e: KonvaEventObject<MouseEvent>) => {
+    useWorkspaceStore.getState().selectComponent(component.id, e.evt.shiftKey);
+  }, [component.id]);
+
+  const onPinMouseDown = useCallback((e: KonvaEventObject<MouseEvent>, pinId: string) => {
+    e.cancelBubble = true;
+    handlePinMouseDown({ componentId: component.id, pinId });
+  }, [component.id, handlePinMouseDown]);
   
   const renderPins = () => {
     return Object.values(component.pins).map((pin) => {
       const isHovered = hoveredPin === pin.id;
-      const isAnode = pin.id === 'ANODE';
       return (
         <Group
           key={pin.id}
@@ -135,7 +153,7 @@ export const LED: React.FC<LEDProps> = ({ component }) => {
               />
             </Group>
           )}
-      </Group>
+        </Group>
       );
     });
   };
@@ -161,46 +179,50 @@ export const LED: React.FC<LEDProps> = ({ component }) => {
       </Group>
 
       {/* Glow effect */}
-      {displayedBrightness > 0.05 && (
-        <Circle
-          x={20} y={14}
-          radius={32}
-          fillRadialGradientStartPoint={{ x: 0, y: 0 }}
-          fillRadialGradientStartRadius={0}
-          fillRadialGradientEndPoint={{ x: 0, y: 0 }}
-          fillRadialGradientEndRadius={32}
-          fillRadialGradientColorStops={[
-            0, `rgba(${c.r}, ${c.g}, ${c.b}, ${0.9 * displayedBrightness})`,
-            0.4, `rgba(${c.r}, ${c.g}, ${c.b}, ${0.4 * displayedBrightness})`,
-            1, 'rgba(0, 0, 0, 0)'
-          ]}
-          listening={false}
-        />
-      )}
+      <Circle
+        ref={glowRef}
+        x={20} y={14}
+        radius={32}
+        fillRadialGradientStartPoint={{ x: 0, y: 0 }}
+        fillRadialGradientStartRadius={0}
+        fillRadialGradientEndPoint={{ x: 0, y: 0 }}
+        fillRadialGradientEndRadius={32}
+        visible={false}
+        listening={false}
+      />
 
       {/* LED Body */}
       <Group 
+        ref={bodyGroupRef}
         x={12} y={6}
         shadowColor={`rgb(${c.r}, ${c.g}, ${c.b})`}
-        shadowBlur={displayedBrightness > 0.05 ? 15 * displayedBrightness : 0}
-        shadowOpacity={displayedBrightness}
+        shadowBlur={0}
+        shadowOpacity={0}
       >
         {/* Dome */}
         <Path
+          ref={domeRef}
           data="M 0 8 A 8 8 0 0 1 16 8 Z"
-          fill={currentColor}
+          fill={`rgb(${c.r * 0.3}, ${c.g * 0.3}, ${c.b * 0.3})`}
           opacity={0.9}
         />
         {/* Base with notch on the right side */}
         <Path
+          ref={baseRef}
           data="M 0 8 L 16 8 L 16 12 L 15 14 L 0 14 Z"
-          fill={currentColor}
+          fill={`rgb(${c.r * 0.3}, ${c.g * 0.3}, ${c.b * 0.3})`}
         />
       </Group>
 
       {renderPins()}
     </Group>
   );
-};
-
-
+}, (prev, next) => {
+  return (
+    prev.component.position.x === next.component.position.x &&
+    prev.component.position.y === next.component.position.y &&
+    prev.component.rotation === next.component.rotation &&
+    JSON.stringify(prev.component.properties) === JSON.stringify(next.component.properties) &&
+    JSON.stringify(prev.component.pins) === JSON.stringify(next.component.pins)
+  );
+});

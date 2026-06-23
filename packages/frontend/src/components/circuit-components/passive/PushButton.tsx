@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback, memo } from 'react';
 import { useComponentDropAnimation } from '../../../hooks/useComponentDropAnimation';
 import { Group, Rect, Circle, Label, Tag, Text, Line } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
@@ -12,7 +12,7 @@ interface PushButtonProps {
   component: CircuitComponent;
 }
 
-export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
+export const PushButton = memo(({ component }: PushButtonProps) => {
   const [hoveredPin, setHoveredPin] = useState<string | null>(null);
   const [isHoveringButton, setIsHoveringButton] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
@@ -25,29 +25,29 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
 
   const status = useSimulationStore((state) => state.status);
 
-  const handleDragStart = () => {
+  const handleDragStart = useCallback(() => {
     useWorkspaceStore.getState().pushHistory();
-  };
+  }, []);
 
-  const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragMove = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
 
-  const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragEnd = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
 
-  const handleClick = (e: KonvaEventObject<MouseEvent>) => {
+  const handleClick = useCallback((e: KonvaEventObject<MouseEvent>) => {
     if (status === 'RUNNING') return;
     useWorkspaceStore.getState().selectComponent(component.id, e.evt.shiftKey);
-  };
+  }, [component.id, status]);
 
-  const onPinMouseDown = (e: KonvaEventObject<MouseEvent>, pinId: string) => {
+  const onPinMouseDown = useCallback((e: KonvaEventObject<MouseEvent>, pinId: string) => {
     e.cancelBubble = true;
     handlePinMouseDown({ componentId: component.id, pinId });
-  };
+  }, [component.id, handlePinMouseDown]);
 
-  const handleButtonDown = (e: KonvaEventObject<MouseEvent>) => {
+  const handleButtonDown = useCallback((e: KonvaEventObject<MouseEvent>) => {
     if (status !== 'RUNNING') return;
     e.cancelBubble = true;
 
@@ -59,9 +59,9 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
     window.dispatchEvent(new CustomEvent('EXTERNAL_INPUT', {
       detail: { componentId: component.id, state: 'pressed' }
     }));
-  };
+  }, [component.id, status]);
 
-  const handleButtonUp = () => {
+  const handleButtonUp = useCallback(() => {
     if (!isPressed) return;
     setIsPressed(false);
     if (capRef.current) {
@@ -71,7 +71,7 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
     window.dispatchEvent(new CustomEvent('EXTERNAL_INPUT', {
       detail: { componentId: component.id, state: 'released' }
     }));
-  };
+  }, [component.id, isPressed]);
 
   const renderPins = () => {
     return Object.values(component.pins).map((pin) => {
@@ -191,4 +191,11 @@ export const PushButton: React.FC<PushButtonProps> = ({ component }) => {
       {renderPins()}
     </Group>
   );
-};
+}, (prev, next) => {
+  return (
+    prev.component.position.x === next.component.position.x &&
+    prev.component.position.y === next.component.position.y &&
+    prev.component.rotation === next.component.rotation &&
+    JSON.stringify(prev.component.properties) === JSON.stringify(next.component.properties)
+  );
+});

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 
 import { Group, Rect, Circle, Text } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
@@ -13,7 +13,7 @@ interface LCDProps {
 
 const COMMONLY_USED_PINS = ['VSS', 'VDD', 'V0', 'RS', 'RW', 'E', 'D4', 'D5', 'D6', 'D7', 'A', 'K'];
 
-export const LCD16x2: React.FC<LCDProps> = ({ component }) => {
+export const LCD16x2 = memo(({ component }: LCDProps) => {
   const [hoveredPin, setHoveredPin] = useState<string | null>(null);
   const [cursorVisible, setCursorVisible] = useState(true);
   const [flashRow, setFlashRow] = useState<number | null>(null);
@@ -46,26 +46,26 @@ export const LCD16x2: React.FC<LCDProps> = ({ component }) => {
     prevRowsRef.current = rows;
   }, [rows]);
 
-  const handleDragStart = () => {
+  const handleDragStart = useCallback(() => {
     useWorkspaceStore.getState().pushHistory();
-  };
+  }, []);
 
-  const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragMove = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
 
-  const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragEnd = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
 
-  const handleClick = (e: KonvaEventObject<MouseEvent>) => {
+  const handleClick = useCallback((e: KonvaEventObject<MouseEvent>) => {
     useWorkspaceStore.getState().selectComponent(component.id, e.evt.shiftKey);
-  };
+  }, [component.id]);
 
-  const onPinMouseDown = (e: KonvaEventObject<MouseEvent>, pinId: string) => {
+  const onPinMouseDown = useCallback((e: KonvaEventObject<MouseEvent>, pinId: string) => {
     e.cancelBubble = true;
     handlePinMouseDown({ componentId: component.id, pinId });
-  };
+  }, [component.id, handlePinMouseDown]);
 
   const renderPins = () => {
     return Object.values(component.pins).map((pin) => {
@@ -223,7 +223,11 @@ export const LCD16x2: React.FC<LCDProps> = ({ component }) => {
       {renderPins()}
     </Group>
   );
-};
-
-
-
+}, (prev, next) => {
+  return (
+    prev.component.position.x === next.component.position.x &&
+    prev.component.position.y === next.component.position.y &&
+    prev.component.rotation === next.component.rotation &&
+    JSON.stringify(prev.component.properties) === JSON.stringify(next.component.properties)
+  );
+});

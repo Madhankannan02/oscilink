@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { useComponentDropAnimation } from '../../../hooks/useComponentDropAnimation';
 import { Group, Rect, Circle, Text, Path } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
+import Konva from 'konva';
 import { CircuitComponent } from '../../../types/components';
 import { useWorkspaceStore } from '../../../store/workspaceStore';
 import { useSimulationStore } from '../../../store/simulationStore';
@@ -11,33 +12,20 @@ interface BuzzerProps {
   component: CircuitComponent;
 }
 
-export const Buzzer: React.FC<BuzzerProps> = ({ component }) => {
+export const Buzzer = memo(({ component }: BuzzerProps) => {
   const [hoveredPin, setHoveredPin] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
-  const [waveOffset, setWaveOffset] = useState(0);
+  const waveOffsetRef = useRef(0);
+  const isActiveRef = useRef(false);
+
+  const arcRef0 = useRef<Konva.Path>(null);
+  const arcRef1 = useRef<Konva.Path>(null);
+  const arcRef2 = useRef<Konva.Path>(null);
 
   const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = React.useContext(CanvasContext);
 
-  const compState = useSimulationStore((state) => state.componentStates[component.id]) as any;
-  const isActive = compState?.isActive ?? false;
-  const frequency = compState?.frequency ?? 1000;
-
   // Audio element ref
   const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    let animFrame: number;
-    const animate = () => {
-      if (isActive) {
-        setWaveOffset((prev) => (prev + 0.4) % 15);
-      } else {
-        setWaveOffset(0);
-      }
-      animFrame = requestAnimationFrame(animate);
-    };
-    animFrame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animFrame);
-  }, [isActive]);
 
   useEffect(() => {
     const audio = new Audio('/buzzer_sound.mp3');
@@ -52,39 +40,79 @@ export const Buzzer: React.FC<BuzzerProps> = ({ component }) => {
   }, []);
 
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
+    let animFrame: number;
+    
+    const unsubscribe = useSimulationStore.subscribe(
+      (state) => (state.componentStates[component.id] as any)?.isActive ?? false,
+      (isActive) => {
+        isActiveRef.current = isActive;
+        if (audioRef.current) {
+          if (isActive && !isMuted) {
+            audioRef.current.play().catch((err) => {
+              console.warn('Audio play failed:', err);
+            });
+          } else {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+          }
+        }
+      }
+    );
 
-    if (isActive && !isMuted) {
-      audio.play().catch((err) => {
-        console.warn('Audio play failed (maybe require user interaction):', err);
-      });
-    } else {
-      audio.pause();
-      audio.currentTime = 0;
-    }
-  }, [isActive, isMuted]);
+    const animate = () => {
+      if (isActiveRef.current) {
+        waveOffsetRef.current = (waveOffsetRef.current + 0.4) % 15;
+      } else {
+        waveOffsetRef.current = 0;
+      }
+      
+      const arcs = [arcRef0.current, arcRef1.current, arcRef2.current];
+      
+      for (let i = 0; i < 3; i++) {
+        const arc = arcs[i];
+        if (arc) {
+          if (!isActiveRef.current) {
+            arc.visible(false);
+          } else {
+            arc.visible(true);
+            const r = 35 + waveOffsetRef.current + (i * 10);
+            const opacity = Math.max(0, 1 - (r - 35) / 30);
+            arc.data(`M ${20 - r * 0.5} ${-r * 0.866} A ${r} ${r} 0 0 1 ${20 + r * 0.5} ${-r * 0.866}`);
+            arc.opacity(opacity);
+          }
+        }
+      }
 
-  const handleDragStart = () => {
+      animFrame = requestAnimationFrame(animate);
+    };
+    animFrame = requestAnimationFrame(animate);
+    
+    return () => {
+      cancelAnimationFrame(animFrame);
+      unsubscribe();
+    };
+  }, [component.id, isMuted]);
+
+  const handleDragStart = useCallback(() => {
     useWorkspaceStore.getState().pushHistory();
-  };
+  }, []);
 
-  const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragMove = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
 
-  const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragEnd = useCallback((e: KonvaEventObject<DragEvent>) => {
     useWorkspaceStore.getState().moveSelectedComponents(component.id, e.target.x(), e.target.y());
-  };
+  }, [component.id]);
 
-  const handleClick = (e: KonvaEventObject<MouseEvent>) => {
+  const handleClick = useCallback((e: KonvaEventObject<MouseEvent>) => {
     useWorkspaceStore.getState().selectComponent(component.id, e.evt.shiftKey);
-  };
+  }, [component.id]);
 
-  const onPinMouseDown = (e: KonvaEventObject<MouseEvent>, pinId: string) => {
+  const onPinMouseDown = useCallback((e: KonvaEventObject<MouseEvent>, pinId: string) => {
     e.cancelBubble = true;
     handlePinMouseDown({ componentId: component.id, pinId });
-  };
+  }, [component.id, handlePinMouseDown]);
 
   const renderPins = () => {
     return Object.values(component.pins).map((pin) => {
@@ -153,26 +181,6 @@ export const Buzzer: React.FC<BuzzerProps> = ({ component }) => {
     return holes;
   };
 
-  // Sound waves
-  const renderSoundWaves = () => {
-    if (!isActive) return null;
-    const arcs = [];
-    for (let i = 0; i < 3; i++) {
-      const r = 35 + waveOffset + (i * 10);
-      const opacity = Math.max(0, 1 - (r - 35) / 30);
-      arcs.push(
-        <Path
-          key={i}
-          data={`M ${20 - r * 0.5} ${-r * 0.866} A ${r} ${r} 0 0 1 ${20 + r * 0.5} ${-r * 0.866}`}
-          stroke="#ef4444"
-          strokeWidth={2}
-          opacity={opacity}
-        />
-      );
-    }
-    return arcs;
-  };
-
   return (
     <Group
       x={component.position.x}
@@ -185,7 +193,9 @@ export const Buzzer: React.FC<BuzzerProps> = ({ component }) => {
       onClick={handleClick}
       onTap={handleClick}
     >
-      {renderSoundWaves()}
+      <Path ref={arcRef0} stroke="#ef4444" strokeWidth={2} visible={false} listening={false} />
+      <Path ref={arcRef1} stroke="#ef4444" strokeWidth={2} visible={false} listening={false} />
+      <Path ref={arcRef2} stroke="#ef4444" strokeWidth={2} visible={false} listening={false} />
 
       <Group>
         {/* Physical pins extending from bottom */}
@@ -235,7 +245,12 @@ export const Buzzer: React.FC<BuzzerProps> = ({ component }) => {
       {renderPins()}
     </Group>
   );
-};
-
-
-
+}, (prev, next) => {
+  return (
+    prev.component.position.x === next.component.position.x &&
+    prev.component.position.y === next.component.position.y &&
+    prev.component.rotation === next.component.rotation &&
+    JSON.stringify(prev.component.properties) === JSON.stringify(next.component.properties) &&
+    JSON.stringify(prev.component.pins) === JSON.stringify(next.component.pins)
+  );
+});
