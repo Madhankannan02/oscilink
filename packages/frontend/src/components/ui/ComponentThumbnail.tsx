@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import { Stage, Layer, Group } from 'react-konva';
-import { ComponentType } from '../../../types/components';
-import { createComponent } from '../../../utils/componentFactory';
-import { ComponentRouter } from '../../canvas/ComponentLayer';
-import { CanvasContext } from '../../canvas/Canvas';
+import { ComponentType } from '../../types/components';
+import { createComponent } from '../../utils/componentFactory';
+import { ComponentRouter } from '../canvas/ComponentLayer';
+import { CanvasContext } from '../canvas/Canvas';
 
 const dummyContext = {
   handlePinMouseDown: () => {},
