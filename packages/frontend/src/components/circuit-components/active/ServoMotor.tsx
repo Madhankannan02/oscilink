@@ -30,31 +30,25 @@ export const ServoMotor = memo(({ component }: ServoMotorProps) => {
   const servoType = component.properties?.servoType || 'positional';
 
   useEffect(() => {
-    const unsubscribe = useSimulationStore.subscribe(
-      (state) => state.componentStates[component.id],
-      (compState: any) => {
-        targetAngleRef.current = compState?.angle ?? 90;
-        targetSpeedRef.current = compState?.speed ?? 0;
-      }
-    );
-    return unsubscribe;
-  }, [component.id]);
-
-  useEffect(() => {
     let lastTime = performance.now();
     const updateAnimation = (time: number) => {
       const dt = time - lastTime;
       lastTime = time;
 
+      const state = useSimulationStore.getState();
+      const compState = state.componentStates[component.id] as any;
+      const targetAngle = compState?.angle ?? 90;
+      const targetSpeed = compState?.speed ?? 0;
+
       let current = displayedAngleRef.current;
       if (servoType === 'continuous') {
-        current += targetSpeedRef.current * 0.36 * dt;
+        current += targetSpeed * 0.36 * dt;
       } else {
-        const diff = targetAngleRef.current - current;
+        const diff = targetAngle - current;
         if (Math.abs(diff) >= 0.5) {
           current += diff * 0.15;
         } else {
-          current = targetAngleRef.current;
+          current = targetAngle;
         }
       }
       

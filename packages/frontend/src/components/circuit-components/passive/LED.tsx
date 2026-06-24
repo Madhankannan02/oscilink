@@ -38,22 +38,18 @@ export const LED = memo(({ component }: LEDProps) => {
   // Animate brightness smoothly using refs
   useEffect(() => {
     let currentBrightness = 0;
-    let targetBrightness = 0;
 
-    const unsubscribe = useSimulationStore.subscribe(
-      (state) => (state.componentStates[component.id] as any)?.brightness ?? 0,
-      (newBrightness: number) => {
-        targetBrightness = newBrightness;
-      }
-    );
-    
     const animate = () => {
+      // Get the latest brightness directly from the store on every frame
+      // This is robust against keys being deleted during resetSimulation()
+      const state = useSimulationStore.getState();
+      const targetBrightness = (state.componentStates[component.id] as any)?.brightness ?? 0;
+
       if (Math.abs(currentBrightness - targetBrightness) >= 0.01) {
         const isTurningOn = targetBrightness > currentBrightness;
         const step = isTurningOn ? 0.3 : 0.15;
         currentBrightness += (targetBrightness - currentBrightness) * step;
-        
-        // Directly update Konva nodes
+
         const r = Math.floor(c.r * 0.3 + (c.r - c.r * 0.3) * currentBrightness);
         const g = Math.floor(c.g * 0.3 + (c.g - c.g * 0.3) * currentBrightness);
         const b = Math.floor(c.b * 0.3 + (c.b - c.b * 0.3) * currentBrightness);
@@ -61,33 +57,47 @@ export const LED = memo(({ component }: LEDProps) => {
 
         if (glowRef.current) {
           if (currentBrightness > 0.05) {
-            glowRef.current.visible(true);
-            glowRef.current.fillRadialGradientColorStops([
+            (glowRef.current as any).setAttr('visible', true);
+            (glowRef.current as any).setAttr('fillRadialGradientColorStops', [
               0, `rgba(${c.r}, ${c.g}, ${c.b}, ${0.9 * currentBrightness})`,
               0.4, `rgba(${c.r}, ${c.g}, ${c.b}, ${0.4 * currentBrightness})`,
               1, 'rgba(0, 0, 0, 0)'
             ]);
           } else {
-            glowRef.current.visible(false);
+            (glowRef.current as any).setAttr('visible', false);
           }
         }
         
         if (bodyGroupRef.current) {
-          (bodyGroupRef.current as any).shadowBlur(currentBrightness > 0.05 ? 15 * currentBrightness : 0);
-          (bodyGroupRef.current as any).shadowOpacity(currentBrightness);
+          (bodyGroupRef.current as any).setAttr('shadowBlur', currentBrightness > 0.05 ? 15 * currentBrightness : 0);
+          (bodyGroupRef.current as any).setAttr('shadowOpacity', currentBrightness);
         }
+        if (domeRef.current) (domeRef.current as any).setAttr('fill', currentColor);
+        if (baseRef.current) (baseRef.current as any).setAttr('fill', currentColor);
 
-        if (domeRef.current) domeRef.current.fill(currentColor);
-        if (baseRef.current) baseRef.current.fill(currentColor);
+      } else if (currentBrightness !== targetBrightness) {
+        // Snap to target to ensure it fully settles
+        currentBrightness = targetBrightness;
+        const r = Math.floor(c.r * 0.3 + (c.r - c.r * 0.3) * currentBrightness);
+        const g = Math.floor(c.g * 0.3 + (c.g - c.g * 0.3) * currentBrightness);
+        const b = Math.floor(c.b * 0.3 + (c.b - c.b * 0.3) * currentBrightness);
+        const currentColor = `rgb(${r}, ${g}, ${b})`;
+
+        if (glowRef.current) (glowRef.current as any).setAttr('visible', currentBrightness > 0.05);
+        if (bodyGroupRef.current) {
+          (bodyGroupRef.current as any).setAttr('shadowBlur', 0);
+          (bodyGroupRef.current as any).setAttr('shadowOpacity', currentBrightness);
+        }
+        if (domeRef.current) (domeRef.current as any).setAttr('fill', currentColor);
+        if (baseRef.current) (baseRef.current as any).setAttr('fill', currentColor);
       }
-      
+
       animFrameRef.current = requestAnimationFrame(animate);
     };
     
     animFrameRef.current = requestAnimationFrame(animate);
     
     return () => {
-      unsubscribe();
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
   }, [component.id, c.r, c.g, c.b]);

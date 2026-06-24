@@ -70,8 +70,12 @@ class SimulationManager {
   }
 
   private handleMessage(eventData: any) {
-    const store = useSimulationStore.getState();
     const type = eventData.type;
+    
+    // Ignore messages (except STATUS) if simulation is stopped to prevent race conditions
+    if (!this.initialized && type !== 'STATUS') return;
+
+    const store = useSimulationStore.getState();
     // Extract payload carefully regardless of whether it's nested or not
     const payload = eventData.payload || eventData;
 

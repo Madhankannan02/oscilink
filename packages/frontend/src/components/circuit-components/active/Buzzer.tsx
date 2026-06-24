@@ -40,11 +40,15 @@ export const Buzzer = memo(({ component }: BuzzerProps) => {
 
   useEffect(() => {
     let animFrame: number;
-    
-    const unsubscribe = useSimulationStore.subscribe(
-      (state) => (state.componentStates[component.id] as any)?.isActive ?? false,
-      (isActive: boolean) => {
-        isActiveRef.current = isActive;
+    let lastIsActive = false;
+    const animate = () => {
+      // Get the latest isActive directly from the store on every frame
+      const state = useSimulationStore.getState();
+      const isActive = (state.componentStates[component.id] as any)?.isActive ?? false;
+      isActiveRef.current = isActive;
+
+      if (isActive !== lastIsActive) {
+        lastIsActive = isActive;
         if (audioRef.current) {
           if (isActive && !isMuted) {
             audioRef.current.play().catch((err) => {
@@ -56,9 +60,6 @@ export const Buzzer = memo(({ component }: BuzzerProps) => {
           }
         }
       }
-    );
-
-    const animate = () => {
       if (isActiveRef.current) {
         waveOffsetRef.current = (waveOffsetRef.current + 0.4) % 15;
       } else {
@@ -88,7 +89,6 @@ export const Buzzer = memo(({ component }: BuzzerProps) => {
     
     return () => {
       cancelAnimationFrame(animFrame);
-      unsubscribe();
     };
   }, [component.id, isMuted]);
 
