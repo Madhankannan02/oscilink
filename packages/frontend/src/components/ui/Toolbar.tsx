@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PanelLeft, PanelRight, Play, Square, RotateCcw, Cpu, FileCode2, FolderOpen, Save, AlertTriangle, AlertCircle, Zap, Settings as SettingsIcon } from 'lucide-react';
+import { PanelLeft, PanelRight, Play, Square, Cpu, FileCode2, FolderOpen, Save, AlertTriangle, AlertCircle, Zap, Settings as SettingsIcon } from 'lucide-react';
 import { UndoRedoButtons } from './UndoRedoButtons';
 import { useCompiler } from '../../hooks/useCompiler';
 import { useSimulation } from '../../hooks/useSimulation';
@@ -144,14 +144,7 @@ export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, errorP
               className="hover:opacity-70 transition-opacity disabled:opacity-30"
               title="Stop Simulation"
             >
-              <Square size={14} fill={status === 'RUNNING' ? 'currentColor' : 'none'} className="border-[2.5px] border-current rounded-sm" />
-            </button>
-            <button 
-              onClick={() => simulation.reset()} 
-              className="hover:opacity-70 transition-opacity"
-              title="Reset Simulation"
-            >
-              <RotateCcw size={16} strokeWidth={2.5} />
+              <Square size={16} fill={status === 'RUNNING' ? 'currentColor' : 'none'} />
             </button>
           </div>
 
