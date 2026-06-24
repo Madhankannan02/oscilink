@@ -153,8 +153,8 @@ export const InteractionLayer: React.FC = () => {
           y={Math.min(selectionStart.y, selectionEnd.y)}
           width={Math.abs(selectionEnd.x - selectionStart.x)}
           height={Math.abs(selectionEnd.y - selectionStart.y)}
-          fill="rgba(59, 130, 246, 0.2)"
-          stroke="#3b82f6"
+          fill="rgba(44, 94, 74, 0.15)"
+          stroke="#2C5E4A"
           strokeWidth={1 / viewport.scale}
         />
       )}
@@ -180,14 +180,14 @@ export const InteractionLayer: React.FC = () => {
             <Rect
               x={selX} y={selY}
               width={selW} height={selH}
-              stroke="#3b82f6"
+              stroke="#2C5E4A"
               strokeWidth={strokeW}
               dash={[6 / viewport.scale, 3 / viewport.scale]}
             />
-            <Rect x={selX - 4 / viewport.scale} y={selY - 4 / viewport.scale} width={8 / viewport.scale} height={8 / viewport.scale} fill="white" stroke="#3b82f6" strokeWidth={strokeW / 2} />
-            <Rect x={selX + selW - 4 / viewport.scale} y={selY - 4 / viewport.scale} width={8 / viewport.scale} height={8 / viewport.scale} fill="white" stroke="#3b82f6" strokeWidth={strokeW / 2} />
-            <Rect x={selX - 4 / viewport.scale} y={selY + selH - 4 / viewport.scale} width={8 / viewport.scale} height={8 / viewport.scale} fill="white" stroke="#3b82f6" strokeWidth={strokeW / 2} />
-            <Rect x={selX + selW - 4 / viewport.scale} y={selY + selH - 4 / viewport.scale} width={8 / viewport.scale} height={8 / viewport.scale} fill="white" stroke="#3b82f6" strokeWidth={strokeW / 2} />
+            <Rect x={selX - 4 / viewport.scale} y={selY - 4 / viewport.scale} width={8 / viewport.scale} height={8 / viewport.scale} fill="white" stroke="#2C5E4A" strokeWidth={strokeW / 2} />
+            <Rect x={selX + selW - 4 / viewport.scale} y={selY - 4 / viewport.scale} width={8 / viewport.scale} height={8 / viewport.scale} fill="white" stroke="#2C5E4A" strokeWidth={strokeW / 2} />
+            <Rect x={selX - 4 / viewport.scale} y={selY + selH - 4 / viewport.scale} width={8 / viewport.scale} height={8 / viewport.scale} fill="white" stroke="#2C5E4A" strokeWidth={strokeW / 2} />
+            <Rect x={selX + selW - 4 / viewport.scale} y={selY + selH - 4 / viewport.scale} width={8 / viewport.scale} height={8 / viewport.scale} fill="white" stroke="#2C5E4A" strokeWidth={strokeW / 2} />
           </Group>
         );
       })}

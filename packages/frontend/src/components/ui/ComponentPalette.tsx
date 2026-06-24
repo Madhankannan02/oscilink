@@ -171,24 +171,27 @@ export const ComponentPalette: React.FC = () => {
 
   return (
     <>
-      <div id="tour-component-palette" className="w-[280px] min-w-[280px] bg-surface border-r border-border flex flex-col h-full overflow-hidden">
+      <div id="tour-component-palette" className="w-full bg-white flex flex-col h-full overflow-hidden rounded-2xl border border-black/5">
         {/* Panel Header */}
-        <div className="p-4 border-b border-border flex flex-col gap-3">
-          <h2 className="text-sm font-medium text-text-secondary uppercase tracking-wider">Components</h2>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
+        <div className="p-5 pb-3 flex flex-col gap-3">
+          <div>
+            <h2 className="text-xl font-bold text-[#2C5E4A]">Components</h2>
+            <p className="text-[11px] text-text-muted mt-0.5">Drag to canvas</p>
+          </div>
+          <div className="relative mt-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#2C5E4A]/50" size={16} />
             <input
               type="text"
               placeholder="Search components..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-[#181818] border border-border rounded pl-9 pr-3 py-1.5 text-sm text-text placeholder-text-muted focus:outline-none focus:border-primary transition-colors"
+              className="w-full bg-[#F3F4F3] rounded-full pl-9 pr-4 py-2 text-[13px] text-[#2C5E4A] placeholder-[#2C5E4A]/50 focus:outline-none"
             />
           </div>
         </div>
 
         {/* Component List */}
-        <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto px-4 pb-4 custom-scrollbar">
           {filteredCategories.length === 0 ? (
             <div className="text-center text-text-muted text-sm mt-8">
               No components found
@@ -198,29 +201,33 @@ export const ComponentPalette: React.FC = () => {
               <div key={category.name} className="mb-4">
                 <button
                   onClick={() => toggleCategory(category.name)}
-                  className="flex items-center gap-2 w-full text-left px-2 py-1 mb-2 text-text-secondary hover:text-text transition-colors"
+                  className="flex items-center justify-between w-full text-left px-1 py-1 mb-2 text-[#2C5E4A]/70 hover:text-[#2C5E4A] transition-colors"
                 >
+                  <span className="text-[11px] font-bold uppercase tracking-widest">{category.name}</span>
                   <ChevronRight
-                    size={16}
-                    className={`transition-transform ${!collapsedCategories[category.name] ? 'rotate-90' : ''}`}
+                    size={14}
+                    className={`transition-transform duration-200 ${!collapsedCategories[category.name] ? 'rotate-90' : ''}`}
                   />
-                  <span className="text-sm font-medium">{category.name}</span>
                 </button>
 
                 {!collapsedCategories[category.name] && (
-                  <div className="flex flex-col gap-2 px-2">
+                  <div className="flex flex-col gap-2">
                     {category.components.map(comp => (
                       <div
                         key={comp.type}
                         onMouseDown={(e) => handleMouseDown(e, comp.type, comp.name)}
-                        className="flex items-start gap-3 p-3 bg-surface border border-border rounded cursor-grab active:cursor-grabbing hover:bg-surface-hover hover:border-primary/50 active:scale-[0.98] transition-all select-none"
+                        className="flex items-center gap-3 p-2.5 bg-[#F3F4F3] rounded-xl cursor-grab active:cursor-grabbing hover:bg-[#d2e8d6] active:scale-[0.98] transition-all select-none group"
                       >
-                        <div className="bg-[#181818] rounded flex-shrink-0 flex items-center justify-center" style={{ width: 40, height: 40 }}>
-                          <ComponentThumbnail type={comp.type} size={32} />
+                        <div className="bg-white/50 rounded-lg flex-shrink-0 flex items-center justify-center shadow-sm border border-black/5" style={{ width: 36, height: 36 }}>
+                          <ComponentThumbnail type={comp.type} size={28} />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-medium text-primary truncate">{comp.name}</h3>
-                          <p className="text-xs text-text-muted truncate mt-0.5">{comp.description}</p>
+                        <div className="flex-1 min-w-0 pr-2">
+                          <h3 className="text-[13px] font-semibold text-[#2C5E4A] truncate group-hover:text-[#1a382c] transition-colors">{comp.name}</h3>
+                          {comp.type === 'ARDUINO_UNO' ? (
+                            <p className="text-[9px] text-[#2C5E4A]/60 truncate mt-0.5">ATmega328P based</p>
+                          ) : (
+                            <p className="text-[9px] text-[#2C5E4A]/60 truncate mt-0.5">{comp.description}</p>
+                          )}
                         </div>
                       </div>
                     ))}

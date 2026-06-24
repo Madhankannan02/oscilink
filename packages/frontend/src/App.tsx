@@ -98,8 +98,8 @@ function App() {
         </main>
 
         {/* Left Panel */}
-        <div className={`absolute top-0 bottom-0 left-0 z-10 overflow-hidden transition-all duration-300 ease-in-out ${leftOpen ? 'w-[280px]' : 'w-0'}`}>
-          <div className="w-[280px] h-full absolute top-0 right-0 shadow-[4px_0_24px_rgba(0,0,0,0.06)]">
+        <div className={`absolute top-[80px] bottom-4 left-4 z-10 overflow-hidden transition-all duration-300 ease-in-out ${leftOpen ? 'w-[280px]' : 'w-0'}`}>
+          <div className="w-[280px] h-full absolute top-0 right-0 shadow-[0_4px_24px_rgba(0,0,0,0.06)] rounded-2xl bg-transparent">
             <ComponentPalette />
           </div>
         </div>

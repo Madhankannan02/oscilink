@@ -95,7 +95,7 @@ export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, errorP
 
   return (
     <div className="absolute top-4 left-4 right-4 z-50 pointer-events-none flex justify-center">
-      <header className="w-full h-[60px] bg-white rounded-full shadow-sm flex items-center justify-between px-3 pointer-events-auto border border-black/5">
+      <header className="w-full h-[60px] bg-white rounded-2xl flex items-center justify-between px-3 pointer-events-auto border border-black/5">
         
         {/* Left Section */}
         <div className="flex items-center gap-4 pl-1 flex-1">
@@ -174,25 +174,27 @@ export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, errorP
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  className={clsx('px-2 relative hover:bg-black/5 text-[#2C5E4A]', errorPanelOpen && 'bg-black/10')}
+                  className={clsx('px-2 hover:bg-[#2C5E4A]/10 text-[#2C5E4A]', errorPanelOpen && 'bg-[#2C5E4A]/15')}
                   onClick={() => setErrorPanelOpen(!errorPanelOpen)} 
                 >
-                  {totalErrors > 0 ? <AlertCircle size={18} className="text-error" /> : <AlertTriangle size={18} className="text-accent-orange" />}
-                  <span className={clsx('absolute -top-1 -right-1 text-white text-[9px] font-bold w-3.5 h-3.5 flex items-center justify-center rounded-full', totalErrors > 0 ? 'bg-error' : 'bg-accent-orange')}>
-                    {totalErrors > 0 ? totalErrors : totalWarnings > 0 ? totalWarnings : circuitErrors.length}
-                  </span>
+                  <div className="relative flex items-center justify-center">
+                    {totalErrors > 0 ? <AlertCircle size={18} className="text-error" /> : <AlertTriangle size={18} className="text-accent-orange" />}
+                    <span className={clsx('absolute -top-1.5 -right-1.5 text-white text-[9px] font-bold w-3.5 h-3.5 flex items-center justify-center rounded-full', totalErrors > 0 ? 'bg-error' : 'bg-accent-orange')}>
+                      {totalErrors > 0 ? totalErrors : totalWarnings > 0 ? totalWarnings : circuitErrors.length}
+                    </span>
+                  </div>
                 </Button>
               </Tooltip>
             )}
 
             <Tooltip position="bottom" content="Toggle Editor Panel">
-              <Button variant="ghost" size="sm" className={clsx('px-2 hover:bg-black/5 text-[#2C5E4A]', leftOpen && 'bg-black/10')} onClick={() => setLeftOpen(!leftOpen)}>
+              <Button variant="ghost" size="sm" className={clsx('px-2 hover:bg-[#2C5E4A]/10 text-[#2C5E4A]', leftOpen && 'bg-[#2C5E4A]/15')} onClick={() => setLeftOpen(!leftOpen)}>
                 <PanelLeft size={18} />
               </Button>
             </Tooltip>
             
             <Tooltip position="bottom" content="Toggle Properties Panel">
-              <Button variant="ghost" size="sm" className={clsx('px-2 hover:bg-black/5 text-[#2C5E4A]', rightOpen && 'bg-black/10')} onClick={() => setRightOpen(!rightOpen)}>
+              <Button variant="ghost" size="sm" className={clsx('px-2 hover:bg-[#2C5E4A]/10 text-[#2C5E4A]', rightOpen && 'bg-[#2C5E4A]/15')} onClick={() => setRightOpen(!rightOpen)}>
                 <PanelRight size={18} />
               </Button>
             </Tooltip>
