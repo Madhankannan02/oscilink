@@ -146,7 +146,7 @@ export const ServoMotor = memo(({ component }: ServoMotorProps) => {
       onTap={handleClick}
     >
       <Group y={-10}>
-        <Group listening={false}>
+        <Group>
         <Path
           data="M 7 -26 L 43 -26 L 43 42 L 29 42 A 4 4 0 0 0 21 42 L 7 42 Z"
           fill="#287ae6"

@@ -58,41 +58,41 @@ export function UserMenu() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-elevated border border-border-default z-[60] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-          <div className="px-4 py-3 border-b border-border-default bg-surface">
-            <p className="text-sm font-medium text-text-primary truncate">Account</p>
-            <p className="text-xs text-text-muted truncate mt-0.5" title={email}>{email}</p>
+        <div className="absolute right-0 mt-2 w-56 bg-white border border-[#E5EBE8] rounded-md shadow-lg z-[60] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="px-4 py-3 border-b border-[#E5EBE8] bg-white">
+            <p className="text-sm font-medium text-[#2C5E4A] truncate">Account</p>
+            <p className="text-xs text-[#6A7B76] truncate mt-0.5" title={email}>{email}</p>
           </div>
           
           <div className="py-1">
             <button 
-              className="w-full text-left px-4 py-2 text-sm text-text-secondary hover:text-text hover:bg-surface-hover transition-colors flex items-center gap-2"
+              className="w-full text-left px-4 py-2 text-sm text-[#2C5E4A] font-medium hover:bg-[#F3F4F3] transition-colors flex items-center gap-3"
               onClick={() => { 
                 setIsOpen(false);
                 setMyProjectsOpen(true);
               }}
             >
-              <FolderOpen size={14} />
+              <FolderOpen size={14} className="text-[#6A7B76]" />
               My Projects
             </button>
             <button 
-              className="w-full text-left px-4 py-2 text-sm text-text-secondary hover:text-text hover:bg-surface-hover transition-colors flex items-center gap-2"
+              className="w-full text-left px-4 py-2 text-sm text-[#2C5E4A] font-medium hover:bg-[#F3F4F3] transition-colors flex items-center gap-3"
               onClick={() => { setIsOpen(false); /* handle settings */ }}
             >
-              <Settings size={14} />
+              <Settings size={14} className="text-[#6A7B76]" />
               Settings
             </button>
           </div>
           
-          <div className="py-1 border-t border-border-default">
+          <div className="py-1 border-t border-[#E5EBE8]">
             <button 
-              className="w-full text-left px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-surface-hover transition-colors flex items-center gap-2"
+              className="w-full text-left px-4 py-2 text-sm text-red-500 font-medium hover:bg-[#F3F4F3] transition-colors flex items-center gap-3"
               onClick={() => {
                 setIsOpen(false);
                 signOut();
               }}
             >
-              <LogOut size={14} />
+              <LogOut size={14} className="text-red-400" />
               Sign Out
             </button>
           </div>

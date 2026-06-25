@@ -227,7 +227,7 @@ export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, errorP
                 Cancel
               </button>
               <button 
-                className="px-5 py-2 rounded-full text-sm font-bold bg-[#FCEAEB] hover:bg-[#FF8A8A]/20 text-[#FF8A8A] transition-colors"
+                className="px-5 py-2 rounded-full text-sm font-bold bg-[#2C5E4A] hover:bg-[#1E4334] text-white shadow-sm transition-colors"
                 onClick={confirmAction === 'new' ? executeNewProject : executeOpenProject}
               >
                 {confirmAction === 'new' ? 'Start Fresh' : 'Continue'}

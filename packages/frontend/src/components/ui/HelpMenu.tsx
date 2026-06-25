@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { HelpCircle, Play, Keyboard, Info, Bug, X } from 'lucide-react';
-import { Button } from './Button';
+
 import { Tooltip } from './Tooltip';
 import { createPortal } from 'react-dom';
 
@@ -41,14 +41,12 @@ export function HelpMenu() {
     <>
       <div className="relative" ref={menuRef}>
         <Tooltip position="bottom" content="Help & Resources">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className={`px-2 text-[#2C5E4A] hover:bg-[#2C5E4A]/10 ${isOpen ? 'bg-[#2C5E4A]/15 text-[#2C5E4A]' : ''}`}
+          <button 
+            className={`p-2 rounded-md text-[#2C5E4A] hover:bg-[#2C5E4A]/10 transition-colors ${isOpen ? 'bg-[#2C5E4A]/15' : ''}`}
             onClick={() => setIsOpen(!isOpen)}
           >
             <HelpCircle size={18} />
-          </Button>
+          </button>
         </Tooltip>
 
         {isOpen && (
