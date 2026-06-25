@@ -22,9 +22,6 @@ export const ServoMotor = memo(({ component }: ServoMotorProps) => {
   useComponentDropAnimation(component, outerGroupRef);
   const animFrameRef = useRef<number>();
 
-  const targetAngleRef = useRef(90);
-  const targetSpeedRef = useRef(0);
-
   const { handlePinMouseDown, handlePinMouseEnter, handlePinMouseLeave } = React.useContext(CanvasContext);
 
   const servoType = component.properties?.servoType || 'positional';

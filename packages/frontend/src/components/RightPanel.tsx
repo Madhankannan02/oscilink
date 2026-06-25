@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Terminal, AlertCircle, Code, Settings2, HelpCircle } from 'lucide-react';
+import { Terminal, AlertCircle, Code, Settings2 } from 'lucide-react';
 import { SerialMonitor } from './editor/SerialMonitor';
-import { ProblemsPanel } from './ui/ProblemsPanel';
+import { ErrorPanel as ProblemsPanel } from './ui/ErrorPanel';
 import { PropertiesPanel } from './ui/PropertiesPanel';
 import { CodeEditor, CodeEditorRef } from './editor/CodeEditor';
 import { useEditorStore } from '../store/editorStore';
@@ -105,11 +105,7 @@ export function RightPanel({ editorRef }: RightPanelProps) {
           <CodeEditor ref={editorRef} />
         </div>
 
-        {activeTab === 'problems' && (
-          <div className="absolute inset-0 overflow-y-auto custom-scrollbar">
-            <ProblemsPanel editorRef={editorRef} />
-          </div>
-        )}
+        {activeTab === 'problems' && <ProblemsPanel />}
 
         {/* Keep SerialMonitor rendered but hidden to not lose its state */}
         <div className={`absolute inset-0 ${activeTab === 'serial' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>

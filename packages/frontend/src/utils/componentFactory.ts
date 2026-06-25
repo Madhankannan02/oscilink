@@ -152,13 +152,6 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
       break;
     }
 
-    case 'POTENTIOMETER': {
-      pins['VCC'] = createPin('VCC', 'VCC', 'power', 'input', { x: 4, y: 46 });
-      pins['WIPER'] = createPin('WIPER', 'WIP', 'analog', 'output', { x: 18, y: 46 });
-      pins['GND'] = createPin('GND', 'GND', 'ground', 'input', { x: 32, y: 46 });
-      properties = { resistance: 10000 };
-      break;
-    }
 
     case 'SERVO_MOTOR': {
       pins['GND'] = createPin('GND', 'GND', 'ground', 'input', { x: 15, y: 40 });

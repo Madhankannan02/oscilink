@@ -267,7 +267,6 @@ export const Breadboard = memo(({ component }: BreadboardProps) => {
         x={0} y={0} width={330} height={180}
         fill="rgba(0,0,0,0.001)"
         onMouseMove={(e) => {
-          e.cancelBubble = true;
           const pinId = getPinAtPointer(e);
           if (pinId !== hoveredPin) {
             setHoveredPin(pinId);
@@ -280,8 +279,7 @@ export const Breadboard = memo(({ component }: BreadboardProps) => {
             }
           }
         }}
-        onMouseLeave={(e) => {
-          e.cancelBubble = true;
+        onMouseLeave={() => {
           setHoveredPin(null);
           document.body.style.cursor = 'default';
           handlePinMouseLeave();

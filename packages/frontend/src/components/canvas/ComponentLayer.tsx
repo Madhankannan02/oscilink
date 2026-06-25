@@ -50,12 +50,13 @@ const MemoizedComponent = React.memo(
     return <ComponentRouter component={component} />;
   },
   (prev, next) => {
-    // Re-render when position, rotation, or properties change
+    // Re-render when position, rotation, properties, or pins change
     return (
       prev.component.position.x === next.component.position.x &&
       prev.component.position.y === next.component.position.y &&
       prev.component.rotation === next.component.rotation &&
-      prev.component.properties === next.component.properties
+      JSON.stringify(prev.component.properties) === JSON.stringify(next.component.properties) &&
+      JSON.stringify(prev.component.pins) === JSON.stringify(next.component.pins)
     );
   }
 );

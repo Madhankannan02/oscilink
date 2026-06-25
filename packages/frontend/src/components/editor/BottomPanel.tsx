@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Terminal, AlertCircle } from 'lucide-react';
 import { SerialMonitor } from './SerialMonitor';
-import { ProblemsPanel } from './ProblemsPanel';
+import { ErrorPanel } from '../ui/ErrorPanel';
 import { useEditorStore } from '../../store/editorStore';
 import { useSimulationStore } from '../../store/simulationStore';
 
@@ -50,7 +50,7 @@ export function BottomPanel() {
 
       {/* Tab Content */}
       <div className="flex-1 overflow-hidden relative bg-[#1A1B26]">
-        {activeTab === 'problems' && <ProblemsPanel />}
+        {activeTab === 'problems' && <ErrorPanel />}
         {/* We keep SerialMonitor rendered but hidden to not lose its state/scroll */}
         <div className={`absolute inset-0 ${activeTab === 'serial' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
           <SerialMonitor />

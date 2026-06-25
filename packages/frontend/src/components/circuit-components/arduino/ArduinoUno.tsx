@@ -149,7 +149,6 @@ export const ArduinoUno = memo(({ component }: ArduinoUnoProps) => {
   };
 
   const handleOverlayMouseMove = useCallback((e: KonvaEventObject<MouseEvent>) => {
-    e.cancelBubble = true;
     const pinId = getPinAtPointer(e);
     if (pinId !== hoveredPin) {
       setHoveredPin(pinId);
@@ -163,8 +162,7 @@ export const ArduinoUno = memo(({ component }: ArduinoUnoProps) => {
     }
   }, [hoveredPin, component.id, handlePinMouseEnter, handlePinMouseLeave]);
 
-  const handleOverlayMouseLeave = useCallback((e: KonvaEventObject<MouseEvent>) => {
-    e.cancelBubble = true;
+  const handleOverlayMouseLeave = useCallback(() => {
     setHoveredPin(null);
     document.body.style.cursor = 'default';
     handlePinMouseLeave();

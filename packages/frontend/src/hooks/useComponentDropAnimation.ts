@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import Konva from 'konva';
 
 export function useComponentDropAnimation(
-  component: { isNew?: boolean },
+  component: { isNew?: boolean, properties?: any },
   groupRef: React.RefObject<any>
 ) {
   const hasRun = useRef(false);
@@ -10,15 +10,18 @@ export function useComponentDropAnimation(
   useEffect(() => {
     if (component.isNew && groupRef.current && !hasRun.current) {
       hasRun.current = true;
-      // Set initial scale to 0.7
-      groupRef.current.scale({ x: 0.7, y: 0.7 });
+      const targetScaleX = component.properties?.flipX ? -1 : 1;
+      const targetScaleY = component.properties?.flipY ? -1 : 1;
+
+      // Set initial scale to 70% of target
+      groupRef.current.scale({ x: targetScaleX * 0.7, y: targetScaleY * 0.7 });
       
       // Animate with Konva Tween
       const tween = new Konva.Tween({
         node: groupRef.current,
         duration: 0.25,
-        scaleX: 1,
-        scaleY: 1,
+        scaleX: targetScaleX,
+        scaleY: targetScaleY,
         easing: Konva.Easings.ElasticEaseOut,
       });
       
