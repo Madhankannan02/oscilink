@@ -12,7 +12,8 @@ export type ComponentType =
   | 'ULTRASONIC_SENSOR'
   | 'TEMPERATURE_SENSOR'
   | 'RELAY'
-  | 'BREADBOARD';
+  | 'BREADBOARD'
+  | 'LCD_16X2_I2C';
 
 export type LEDColor = 'red' | 'green' | 'blue' | 'yellow' | 'white';
 export type WireColor = 'red' | 'black' | 'blue' | 'green' | 'yellow' | 'orange' | 'white';

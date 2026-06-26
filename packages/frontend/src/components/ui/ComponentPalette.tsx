@@ -40,7 +40,8 @@ const CATEGORIES: CategoryDef[] = [
     components: [
       { type: 'SERVO_MOTOR', name: 'Servo Motor', description: 'Standard 180° micro servo' },
       { type: 'BUZZER', name: 'Buzzer', description: 'Piezoelectric buzzer' },
-      { type: 'LCD_16X2', name: 'LCD 16x2', description: 'Liquid crystal display' }
+      { type: 'LCD_16X2', name: 'LCD 16x2', description: 'Liquid crystal display' },
+      { type: 'LCD_16X2_I2C', name: 'LCD 16x2 I2C', description: 'LCD with I2C Backpack' }
     ]
   },
   {

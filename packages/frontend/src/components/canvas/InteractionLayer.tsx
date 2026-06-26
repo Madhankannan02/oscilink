@@ -38,6 +38,10 @@ export const getComponentBounds = (comp: CircuitComponent) => {
     case 'LCD_16X2':
       width = 176; height = 92; offsetX = -12; offsetY = -72;
       break;
+    case 'LCD_16X2_I2C':
+      // Height 72 for just the body. OffsetX -50 to include text labels. Width 214 to cover text+backpack+body
+      width = 214; height = 72; offsetX = -50; offsetY = -72;
+      break;
     case 'ULTRASONIC_SENSOR':
       width = 104; height = 58; offsetX = -52; offsetY = -58;
       break;

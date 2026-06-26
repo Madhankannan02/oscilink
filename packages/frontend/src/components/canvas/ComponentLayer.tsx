@@ -14,6 +14,7 @@ import { Potentiometer } from '../circuit-components/passive/Potentiometer';
 import { ServoMotor } from '../circuit-components/active/ServoMotor';
 import { Buzzer } from '../circuit-components/active/Buzzer';
 import { LCD16x2 } from '../circuit-components/active/LCD16x2';
+import { LCD16x2_I2C } from '../circuit-components/active/LCD16x2_I2C';
 import { UltrasonicSensor } from '../circuit-components/active/UltrasonicSensor';
 import { Relay } from '../circuit-components/active/Relay';
 import { TemperatureSensor } from '../circuit-components/active/TemperatureSensor';
@@ -36,6 +37,7 @@ export const ComponentRouter = ({ component }: { component: CircuitComponent }) 
     case 'SERVO_MOTOR': return <ServoMotor component={component} />;
     case 'BUZZER': return <Buzzer component={component} />;
     case 'LCD_16X2': return <LCD16x2 component={component} />;
+    case 'LCD_16X2_I2C': return <LCD16x2_I2C component={component} />;
     case 'ULTRASONIC_SENSOR': return <UltrasonicSensor component={component} />;
     case 'RELAY': return <Relay component={component} />;
     case 'TEMPERATURE_SENSOR': return <TemperatureSensor component={component} />;

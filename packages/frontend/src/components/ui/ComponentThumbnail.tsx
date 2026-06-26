@@ -27,6 +27,7 @@ export const ComponentThumbnail: React.FC<ComponentThumbnailProps> = ({ type, si
       case 'ARDUINO_UNO': return { scale: size / 210, offsetX: -100, offsetY: -74 };
       case 'BREADBOARD': return { scale: size / 330, offsetX: -165, offsetY: -90 };
       case 'LCD_16X2': return { scale: size / 176, offsetX: -76, offsetY: 36 };
+      case 'LCD_16X2_I2C': return { scale: size / 176, offsetX: -76, offsetY: 36 };
       case 'LED': return { scale: size / 55, offsetX: -20, offsetY: -22.5 };
       case 'RESISTOR': return { scale: size / 70, offsetX: -30, offsetY: -12.5 };
       case 'PUSH_BUTTON': return { scale: size / 50, offsetX: -20, offsetY: -20 };

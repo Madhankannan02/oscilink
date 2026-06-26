@@ -7,7 +7,11 @@ export function detectShortCircuit(_components: CircuitComponent[], _wires: Wire
   const errors: CircuitError[] = [];
   const powerNodes = Array.from(graph.nodes.values()).filter(n => n.pinType === 'power');
   
+  const globalVisited = new Set<string>();
+  
   for (const pNode of powerNodes) {
+    if (globalVisited.has(pNode.id)) continue;
+
     // Custom BFS to find path to ground and sum resistance
     const visited = new Set<string>();
     const queue: { id: string; path: string[]; resistance: number }[] = [{ 
@@ -16,6 +20,7 @@ export function detectShortCircuit(_components: CircuitComponent[], _wires: Wire
       resistance: 0 
     }];
     visited.add(pNode.id);
+    globalVisited.add(pNode.id);
 
     let foundShort = false;
 
@@ -54,6 +59,7 @@ export function detectShortCircuit(_components: CircuitComponent[], _wires: Wire
             const internalNeighborId = `${comp.id}.${pin.id}`;
             if (!visited.has(internalNeighborId)) {
               visited.add(internalNeighborId);
+              globalVisited.add(internalNeighborId);
               queue.push({ 
                 id: internalNeighborId, 
                 path: [...current.path, internalNeighborId], 
@@ -70,6 +76,7 @@ export function detectShortCircuit(_components: CircuitComponent[], _wires: Wire
         for (const neighborId of neighbors) {
           if (!visited.has(neighborId)) {
             visited.add(neighborId);
+            globalVisited.add(neighborId);
             queue.push({ 
               id: neighborId, 
               path: [...current.path, neighborId], 

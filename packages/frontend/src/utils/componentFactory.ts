@@ -195,6 +195,26 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
       break;
     }
 
+    case 'LCD_16X2_I2C': {
+      // 4 pins for I2C backpack: GND, VCC, SDA, SCL
+      const spacingY = 10;
+      const startX = -23; // Align perfectly with visual terminal dot
+      const startY = -50; // Spread vertically inside the backpack (-57 to -17)
+
+      const backpackPins = [
+        { id: 'GND', label: 'GND', type: 'ground' as PinType, dir: 'input' as PinDirection },
+        { id: 'VCC', label: 'VCC', type: 'power' as PinType, dir: 'input' as PinDirection },
+        { id: 'SDA', label: 'SDA', type: 'I2C_SDA' as PinType, dir: 'bidirectional' as PinDirection },
+        { id: 'SCL', label: 'SCL', type: 'I2C_SCL' as PinType, dir: 'bidirectional' as PinDirection },
+      ];
+
+      backpackPins.forEach((p, idx) => {
+        pins[p.id] = createPin(p.id, p.label, p.type, p.dir, { x: startX, y: startY + idx * spacingY });
+      });
+      properties = { columns: 16, rows: 2, i2cAddress: 0x27 };
+      break;
+    }
+
     case 'ULTRASONIC_SENSOR': {
       pins['VCC'] = createPin('VCC', 'VCC', 'power', 'input', { x: -8, y: 0 });
       pins['TRIG'] = createPin('TRIG', 'TRIG', 'digital', 'bidirectional', { x: -3, y: 0 });

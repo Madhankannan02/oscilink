@@ -105,7 +105,7 @@ export function RightPanel({ editorRef }: RightPanelProps) {
           <CodeEditor ref={editorRef} />
         </div>
 
-        {activeTab === 'problems' && <ProblemsPanel />}
+        {activeTab === 'problems' && <ProblemsPanel inline />}
 
         {/* Keep SerialMonitor rendered but hidden to not lose its state */}
         <div className={`absolute inset-0 ${activeTab === 'serial' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>

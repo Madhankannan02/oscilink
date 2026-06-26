@@ -8,9 +8,10 @@ import { CircuitError } from '../../types/simulation';
 
 interface ErrorPanelProps {
   onClose?: () => void;
+  inline?: boolean;
 }
 
-export const ErrorPanel: React.FC<ErrorPanelProps> = ({ onClose }) => {
+export const ErrorPanel: React.FC<ErrorPanelProps> = ({ onClose, inline = false }) => {
   const circuitErrors = useSimulationStore(state => state.circuitErrors);
   const runtimeWarnings = useSimulationStore(state => state.runtimeWarnings);
   const compilationErrors = useEditorStore(state => state.compilationErrors);
@@ -23,6 +24,13 @@ export const ErrorPanel: React.FC<ErrorPanelProps> = ({ onClose }) => {
   const [runtimeExpanded, setRuntimeExpanded] = useState(true);
 
   if (circuitErrors.length === 0 && compilationErrors.length === 0 && runtimeWarnings.length === 0 && staticErrors.length === 0) {
+    if (inline) {
+       return (
+         <div className="w-full h-full flex items-center justify-center text-[#B5C2BF] text-sm font-medium">
+           No problems detected
+         </div>
+       );
+    }
     return null;
   }
 
@@ -49,18 +57,25 @@ export const ErrorPanel: React.FC<ErrorPanelProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="absolute bottom-6 right-6 w-[420px] max-h-[60vh] bg-white border border-[#E5EBE8] rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] flex flex-col z-50 overflow-hidden font-sans">
-      <div className="flex items-center justify-between p-3.5 border-b border-[#E5EBE8] bg-[#F3F4F3]">
-        <h3 className="font-bold text-[#2C5E4A] flex items-center gap-2">
-          <AlertTriangle size={18} className="text-[#f59e0b]" />
-          Diagnostics
-        </h3>
-        {onClose && (
-          <button onClick={onClose} className="text-[#B5C2BF] hover:text-[#2C5E4A] transition-colors p-1 rounded-md hover:bg-black/5">
-            <X size={18} />
-          </button>
-        )}
-      </div>
+    <div className={clsx(
+      "flex flex-col z-50 overflow-hidden font-sans",
+      inline 
+        ? "w-full h-full bg-white" 
+        : "absolute bottom-6 right-6 w-[420px] max-h-[60vh] bg-white border border-[#E5EBE8] rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06)]"
+    )}>
+      {!inline && (
+        <div className="flex items-center justify-between p-3.5 border-b border-[#E5EBE8] bg-[#F3F4F3]">
+          <h3 className="font-bold text-[#2C5E4A] flex items-center gap-2">
+            <AlertTriangle size={18} className="text-[#f59e0b]" />
+            Diagnostics
+          </h3>
+          {onClose && (
+            <button onClick={onClose} className="text-[#B5C2BF] hover:text-[#2C5E4A] transition-colors p-1 rounded-md hover:bg-black/5">
+              <X size={18} />
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="overflow-y-auto flex-1 p-3 space-y-3 custom-scrollbar">
         {/* Circuit Errors Section */}

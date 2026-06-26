@@ -12,11 +12,77 @@ import {
   usart0Config,
   avrInstruction,
   AVRADC,
-  adcConfig
+  adcConfig,
+  AVRTWI,
+  twiConfig,
+  TWIEventHandler
 } from 'avr8js';
 
 import { CircuitGraph, calculateLEDState, calculateBuzzerState, calculateServoState, calculateRelayState, calculateResistorState } from './engine/CircuitGraph';
 import { HD44780 } from './engine/HD44780';
+
+class I2CHandler implements TWIEventHandler {
+  private activeAddress: number | null = null;
+  private isWrite = false;
+
+  constructor(private twi: AVRTWI) {}
+
+  start(_repeated: boolean) {
+    this.twi.completeStart();
+  }
+
+  stop() {
+    this.twi.completeStop();
+    this.activeAddress = null;
+  }
+
+  connectToSlave(addr: number, write: boolean) {
+    this.activeAddress = addr;
+    this.isWrite = write;
+    // For now, always ACK connection to any slave (like LCD at 0x27)
+    this.twi.completeConnect(true);
+  }
+
+  writeByte(value: number) {
+    if (this.activeAddress !== null && this.isWrite) {
+      if (this.activeAddress === 0x27 || this.activeAddress === 0x3F) {
+        if (circuitGraph) {
+          for (const [id, comp] of circuitGraph.components.entries()) {
+            if (comp.type === 'LCD_16X2_I2C') {
+              if (!lcdControllers[id]) {
+                lcdControllers[id] = new HD44780();
+              }
+              const lcd = lcdControllers[id];
+              const rs = (value & 0x01) !== 0;
+              const rw = (value & 0x02) !== 0;
+              const e = (value & 0x04) !== 0;
+              const backlight = (value & 0x08) !== 0;
+              const dataNibble = (value >> 4) & 0x0F;
+
+              const oldLastEnable = lcd.lastEnable;
+              lcd.processPins(rs, rw, e, dataNibble, backlight);
+
+              if (oldLastEnable !== lcd.lastEnable) {
+                queueComponentUpdate(id, { 
+                  rows: lcd.rows, 
+                  cursorRow: lcd.cursorRow, 
+                  cursorCol: lcd.cursorCol,
+                  backlight: lcd.backlight,
+                  cursorVisible: lcd.cursorOn || lcd.blinkOn
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+    this.twi.completeWrite(true);
+  }
+
+  readByte(_ack: boolean) {
+    this.twi.completeRead(0xFF);
+  }
+}
 
 class AVRRunner {
   cpu: CPU;
@@ -28,6 +94,7 @@ class AVRRunner {
   portD: AVRIOPort;
   usart: AVRUSART;
   adc: AVRADC;
+  twi: AVRTWI;
 
   constructor(flashData: Uint8Array) {
     const program = new Uint16Array(flashData.buffer);
@@ -40,6 +107,8 @@ class AVRRunner {
     this.portD = new AVRIOPort(this.cpu, portDConfig);
     this.usart = new AVRUSART(this.cpu, usart0Config, 16000000);
     this.adc = new AVRADC(this.cpu, adcConfig);
+    this.twi = new AVRTWI(this.cpu, twiConfig, 16000000);
+    this.twi.eventHandler = new I2CHandler(this.twi);
   }
 }
 
