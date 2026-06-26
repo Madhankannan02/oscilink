@@ -34,8 +34,27 @@ export const TemperatureSensor = memo(({ component }: TemperatureSensorProps) =>
         if (humTextRef.current) humTextRef.current.text(`${humidity.toFixed(0)}%`);
       }
     );
+
+    // Migration for existing components that were created with old 14px pin layout
+    const vccPin = component.pins['VCC'];
+    if (vccPin && vccPin.position.x !== -10) {
+      useWorkspaceStore.setState((state) => {
+        const comps = [...state.components];
+        const idx = comps.findIndex(c => c.id === component.id);
+        if (idx >= 0) {
+          const newPins = { ...comps[idx].pins };
+          if (newPins['VCC']) newPins['VCC'] = { ...newPins['VCC'], position: { x: -10, y: 0 } };
+          if (newPins['DATA']) newPins['DATA'] = { ...newPins['DATA'], position: { x: 0, y: 0 } };
+          if (newPins['GND']) newPins['GND'] = { ...newPins['GND'], position: { x: 10, y: 0 } };
+          comps[idx] = { ...comps[idx], pins: newPins };
+          return { components: comps };
+        }
+        return state;
+      });
+    }
+
     return unsubscribe;
-  }, [component.id]);
+  }, [component.id, component.pins]);
 
   const handleDragStart = useCallback(() => {
     useWorkspaceStore.getState().pushHistory();
@@ -258,7 +277,7 @@ export const TemperatureSensor = memo(({ component }: TemperatureSensorProps) =>
 
         {/* Pin Label Area */}
         <Text
-          x={5}
+          x={9}
           y={48}
           width={12}
           align="center"
@@ -278,7 +297,7 @@ export const TemperatureSensor = memo(({ component }: TemperatureSensorProps) =>
           fontFamily="monospace"
         />
         <Text
-          x={33}
+          x={29}
           y={48}
           width={12}
           align="center"
@@ -289,14 +308,14 @@ export const TemperatureSensor = memo(({ component }: TemperatureSensorProps) =>
         />
 
         {/* Pin Holes */}
-        <Circle x={11} y={56} radius={1.2} fill="#d1d5db" />
+        <Circle x={15} y={56} radius={1.2} fill="#d1d5db" />
         <Circle x={25} y={56} radius={1.2} fill="#d1d5db" />
-        <Circle x={39} y={56} radius={1.2} fill="#d1d5db" />
+        <Circle x={35} y={56} radius={1.2} fill="#d1d5db" />
 
         {/* Metal Pins */}
-        <Rect x={10.5} y={58} width={1} height={8} fill="#d1d5db" />
+        <Rect x={14.5} y={58} width={1} height={8} fill="#d1d5db" />
         <Rect x={24.5} y={58} width={1} height={8} fill="#d1d5db" />
-        <Rect x={38.5} y={58} width={1} height={8} fill="#d1d5db" />
+        <Rect x={34.5} y={58} width={1} height={8} fill="#d1d5db" />
       </Group>
 
       {/* Render Pin Interaction Points */}

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import { Layer, Group, Rect, Text } from 'react-konva';
 import Konva from 'konva';
 import { useWorkspaceStore } from '../../store/workspaceStore';
@@ -19,6 +19,8 @@ import { UltrasonicSensor } from '../circuit-components/active/UltrasonicSensor'
 import { Relay } from '../circuit-components/active/Relay';
 import { TemperatureSensor } from '../circuit-components/active/TemperatureSensor';
 import { Breadboard } from '../circuit-components/passive/Breadboard';
+import { SevenSegmentCC } from '../circuit-components/active/SevenSegmentCC';
+import { SevenSegmentCA } from '../circuit-components/active/SevenSegmentCA';
 
 const FallbackComponent = ({ component }: { component: CircuitComponent }) => (
   <Group x={component.position.x} y={component.position.y} rotation={component.rotation}>
@@ -27,7 +29,7 @@ const FallbackComponent = ({ component }: { component: CircuitComponent }) => (
   </Group>
 );
 
-export const ComponentRouter = ({ component }: { component: CircuitComponent }) => {
+export const ComponentRouter = memo(({ component }: { component: CircuitComponent }) => {
   switch (component.type) {
     case 'ARDUINO_UNO': return <ArduinoUno component={component} />;
     case 'LED': return <LED component={component} />;
@@ -42,10 +44,12 @@ export const ComponentRouter = ({ component }: { component: CircuitComponent }) 
     case 'RELAY': return <Relay component={component} />;
     case 'TEMPERATURE_SENSOR': return <TemperatureSensor component={component} />;
     case 'BREADBOARD': return <Breadboard component={component} />;
+    case 'SEVEN_SEG_CC': return <SevenSegmentCC component={component} />;
+    case 'SEVEN_SEG_CA': return <SevenSegmentCA component={component} />;
     // Render fallback for un-implemented types
     default: return <FallbackComponent component={component} />;
   }
-};
+});
 
 const MemoizedComponent = React.memo(
   ({ component }: { component: CircuitComponent }) => {

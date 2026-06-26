@@ -20,6 +20,7 @@ import {
 
 import { CircuitGraph, calculateLEDState, calculateBuzzerState, calculateServoState, calculateRelayState, calculateResistorState } from './engine/CircuitGraph';
 import { HD44780 } from './engine/HD44780';
+import { DIGIT_SEGMENTS } from '../utils/sevenSegmentLookup';
 
 class I2CHandler implements TWIEventHandler {
   private activeAddress: number | null = null;
@@ -549,6 +550,56 @@ function handlePinChange(pinName: string, voltage: number) {
             temperatureFahrenheit: simulatedTempCelsius * 9/5 + 32,
             humidity: simulatedHumidity
           });
+        } else if (comp.type === 'SEVEN_SEG_CC') {
+          const comVoltage = circuitGraph.getNodeVoltage(id, 'COM1');
+          const isOn = comVoltage < 0.5; // COM connected to GND
+          
+          const segments: Record<string, boolean> = {};
+          const segmentPins = ['a','b','c','d','e','f','g','dp'];
+          
+          segmentPins.forEach(seg => {
+            const v = circuitGraph!.getNodeVoltage(id, seg);
+            // CC: segment ON when pin is HIGH and COM is at GND
+            segments[seg] = isOn && v > 2.5;
+          });
+          
+          let displayedDigit: number | null = null;
+          for (const [digit, pattern] of Object.entries(DIGIT_SEGMENTS)) {
+            const matches = segmentPins.every(s => 
+              s === 'dp' ? true : (segments[s] === pattern[s])
+            );
+            if (matches) {
+              displayedDigit = parseInt(digit);
+              break;
+            }
+          }
+          
+          queueComponentUpdate(id, { segments, displayedDigit, isOn });
+        } else if (comp.type === 'SEVEN_SEG_CA') {
+          const comVoltage = circuitGraph.getNodeVoltage(id, 'COM1');
+          const isOn = comVoltage > 2.5; // COM connected to 5V
+          
+          const segments: Record<string, boolean> = {};
+          const segmentPins = ['a','b','c','d','e','f','g','dp'];
+          
+          segmentPins.forEach(seg => {
+            const v = circuitGraph!.getNodeVoltage(id, seg);
+            // CA: segment ON when pin is LOW and COM is at 5V
+            segments[seg] = isOn && v < 2.5;
+          });
+          
+          let displayedDigit: number | null = null;
+          for (const [digit, pattern] of Object.entries(DIGIT_SEGMENTS)) {
+            const matches = segmentPins.every(s =>
+              s === 'dp' ? true : (segments[s] === pattern[s])
+            );
+            if (matches) {
+              displayedDigit = parseInt(digit);
+              break;
+            }
+          }
+          
+          queueComponentUpdate(id, { segments, displayedDigit, isOn });
         }
       }
 

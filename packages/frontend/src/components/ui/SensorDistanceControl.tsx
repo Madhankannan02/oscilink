@@ -40,13 +40,13 @@ export const SensorDistanceControl: React.FC = () => {
       bottom: '24px',
       left: '24px',
       width: '280px',
-      backgroundColor: '#1e1e1e',
-      border: '1px solid #333',
-      borderRadius: '8px',
+      backgroundColor: '#2C5E4A',
+      border: '1px solid #1E4133',
+      borderRadius: '16px',
       padding: '16px',
-      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3)',
+      boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
       zIndex: 1000,
-      color: 'white',
+      color: '#ffffff',
       fontFamily: 'sans-serif'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
@@ -54,7 +54,7 @@ export const SensorDistanceControl: React.FC = () => {
         <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Ultrasonic Sensor</h3>
       </div>
       
-      <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: '#9ca3af' }}>
+      <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: '#D2E8D6' }}>
         Simulated Distance
       </p>
 
@@ -68,23 +68,23 @@ export const SensorDistanceControl: React.FC = () => {
         style={{ 
           width: '100%', 
           marginBottom: '8px',
-          accentColor: '#00979D'
+          accentColor: '#ffffff'
         }} 
       />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
         <span style={{ fontSize: '20px', fontWeight: 'bold' }}>{localDistance} cm</span>
-        <span style={{ fontSize: '12px', color: '#6b7280' }}>(HC-SR04 range: 2-400cm)</span>
+        <span style={{ fontSize: '12px', color: '#D2E8D6' }}>(HC-SR04 range: 2-400cm)</span>
       </div>
 
       {!isRunning && (
-        <div style={{ fontSize: '12px', color: '#9ca3af', fontStyle: 'italic', marginTop: '8px' }}>
+        <div style={{ fontSize: '12px', color: '#D2E8D6', fontStyle: 'italic', marginTop: '8px' }}>
           Start simulation to test distance readings
         </div>
       )}
 
       {isRunning && sensorState && sensorState.distanceCm !== undefined && (
-        <div style={{ fontSize: '13px', color: '#10b981', marginTop: '8px', fontWeight: 500 }}>
+        <div style={{ fontSize: '13px', color: '#86efac', marginTop: '8px', fontWeight: 600 }}>
           Last reading: {sensorState.distanceCm}cm
         </div>
       )}

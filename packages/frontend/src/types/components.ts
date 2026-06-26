@@ -13,7 +13,9 @@ export type ComponentType =
   | 'TEMPERATURE_SENSOR'
   | 'RELAY'
   | 'BREADBOARD'
-  | 'LCD_16X2_I2C';
+  | 'LCD_16X2_I2C'
+  | 'SEVEN_SEG_CC'
+  | 'SEVEN_SEG_CA';
 
 export type LEDColor = 'red' | 'green' | 'blue' | 'yellow' | 'white';
 export type WireColor = 'red' | 'black' | 'blue' | 'green' | 'yellow' | 'orange' | 'white';

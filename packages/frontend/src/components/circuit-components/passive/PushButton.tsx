@@ -138,18 +138,18 @@ export const PushButton = memo(({ component }: PushButtonProps) => {
       {/* Leads */}
       <Group listening={false}>
         {/* Top-left leg (1A) */}
-        <Line points={[0, 12, 8, 12]} stroke="#C0C0C0" strokeWidth={2} />
+        <Line points={[0, 10, 3, 10]} stroke="#C0C0C0" strokeWidth={2} />
         {/* Top-right leg (1B) */}
-        <Line points={[32, 12, 40, 12]} stroke="#C0C0C0" strokeWidth={2} />
+        <Line points={[27, 10, 30, 10]} stroke="#C0C0C0" strokeWidth={2} />
         {/* Bottom-left leg (2A) */}
-        <Line points={[0, 28, 8, 28]} stroke="#C0C0C0" strokeWidth={2} />
+        <Line points={[0, 30, 3, 30]} stroke="#C0C0C0" strokeWidth={2} />
         {/* Bottom-right leg (2B) */}
-        <Line points={[32, 28, 40, 28]} stroke="#C0C0C0" strokeWidth={2} />
+        <Line points={[27, 30, 30, 30]} stroke="#C0C0C0" strokeWidth={2} />
       </Group>
 
       {/* Body */}
       <Rect
-        x={8} y={8} width={24} height={24}
+        x={3} y={8} width={24} height={24}
         fill="#333333" stroke="#111111" strokeWidth={1}
         cornerRadius={2}
         listening={false}
@@ -157,16 +157,16 @@ export const PushButton = memo(({ component }: PushButtonProps) => {
 
       {/* Corner pins (decorative) */}
       <Group listening={false}>
-        <Circle x={11} y={11} radius={3} fill="#C0C0C0" />
-        <Circle x={29} y={11} radius={3} fill="#C0C0C0" />
-        <Circle x={11} y={29} radius={3} fill="#C0C0C0" />
-        <Circle x={29} y={29} radius={3} fill="#C0C0C0" />
+        <Circle x={6} y={11} radius={3} fill="#C0C0C0" />
+        <Circle x={24} y={11} radius={3} fill="#C0C0C0" />
+        <Circle x={6} y={29} radius={3} fill="#C0C0C0" />
+        <Circle x={24} y={29} radius={3} fill="#C0C0C0" />
       </Group>
 
       {/* Interactive Button Cap */}
       <Circle
         ref={capRef}
-        x={20} y={20} radius={10}
+        x={15} y={20} radius={10}
         fill={isPressed ? '#990000' : '#cc0000'}
         stroke="#550000" strokeWidth={1}
         onMouseEnter={() => {
@@ -184,7 +184,7 @@ export const PushButton = memo(({ component }: PushButtonProps) => {
 
       {/* Tooltip for non-running state */}
       {isHoveringButton && status !== 'RUNNING' && (
-        <Label x={20} y={8} opacity={0.9} listening={false}>
+        <Label x={15} y={8} opacity={0.9} listening={false}>
           <Tag fill="#1f2937" pointerDirection="down" pointerWidth={6} pointerHeight={6} cornerRadius={4} />
           <Text text="Run simulation to interact" fill="white" fontSize={10} padding={4} />
         </Label>

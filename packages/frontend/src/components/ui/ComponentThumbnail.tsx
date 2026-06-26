@@ -34,7 +34,7 @@ export const ComponentThumbnail: React.FC<ComponentThumbnailProps> = ({ type, si
       case 'POTENTIOMETER': return { scale: size / 40, offsetX: -25, offsetY: -20 };
       case 'SERVO_MOTOR': return { scale: size / 68, offsetX: -25, offsetY: -8 };
       case 'BUZZER': return { scale: size / 72, offsetX: -20, offsetY: -4 };
-      case 'ULTRASONIC_SENSOR': return { scale: size / 104, offsetX: 0, offsetY: 29 };
+      case 'ULTRASONIC_SENSOR': return { scale: size / 208, offsetX: 0, offsetY: 58 };
       case 'RELAY': return { scale: size / 100, offsetX: 0, offsetY: 0 };
       case 'TEMPERATURE_SENSOR': return { scale: size / 66, offsetX: 0, offsetY: 33 };
       default: return { scale: size / 100, offsetX: -50, offsetY: -50 };

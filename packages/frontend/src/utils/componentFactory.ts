@@ -136,10 +136,10 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
     }
 
     case 'PUSH_BUTTON': {
-      pins['PIN_1A'] = createPin('PIN_1A', '1A', 'digital', 'bidirectional', { x: 0, y: 12 });
-      pins['PIN_1B'] = createPin('PIN_1B', '1B', 'digital', 'bidirectional', { x: 40, y: 12 });
-      pins['PIN_2A'] = createPin('PIN_2A', '2A', 'digital', 'bidirectional', { x: 0, y: 28 });
-      pins['PIN_2B'] = createPin('PIN_2B', '2B', 'digital', 'bidirectional', { x: 40, y: 28 });
+      pins['PIN_1A'] = createPin('PIN_1A', '1A', 'digital', 'bidirectional', { x: 0, y: 10 });
+      pins['PIN_1B'] = createPin('PIN_1B', '1B', 'digital', 'bidirectional', { x: 30, y: 10 });
+      pins['PIN_2A'] = createPin('PIN_2A', '2A', 'digital', 'bidirectional', { x: 0, y: 30 });
+      pins['PIN_2B'] = createPin('PIN_2B', '2B', 'digital', 'bidirectional', { x: 30, y: 30 });
       properties = { pullup: false };
       break;
     }
@@ -225,10 +225,40 @@ export function createComponent(type: ComponentType, position: Point): CircuitCo
     }
 
     case 'TEMPERATURE_SENSOR': {
-      pins['VCC'] = createPin('VCC', 'VCC', 'power', 'input', { x: -14, y: 0 });
+      pins['VCC'] = createPin('VCC', 'VCC', 'power', 'input', { x: -10, y: 0 });
       pins['DATA'] = createPin('DATA', 'DAT', 'digital', 'bidirectional', { x: 0, y: 0 });
-      pins['GND'] = createPin('GND', 'GND', 'ground', 'input', { x: 14, y: 0 });
+      pins['GND'] = createPin('GND', 'GND', 'ground', 'input', { x: 10, y: 0 });
       properties = { type: 'DHT11', simulatedTemp: 25.0, simulatedHumidity: 60 };
+      break;
+    }
+
+    case 'SEVEN_SEG_CC': {
+      pins['e']    = createPin('e',    'e',   'digital', 'input', { x: 8,  y: 82 });
+      pins['d']    = createPin('d',    'd',   'digital', 'input', { x: 13, y: 82 });
+      pins['COM1'] = createPin('COM1', 'COM', 'ground',  'input', { x: 18, y: 82 });
+      pins['c']    = createPin('c',    'c',   'digital', 'input', { x: 23, y: 82 });
+      pins['dp']   = createPin('dp',   'dp',  'digital', 'input', { x: 28, y: 82 });
+      pins['b']    = createPin('b',    'b',   'digital', 'input', { x: 33, y: 82 });
+      pins['a']    = createPin('a',    'a',   'digital', 'input', { x: 38, y: 82 });
+      pins['f']    = createPin('f',    'f',   'digital', 'input', { x: 43, y: 82 });
+      pins['g']    = createPin('g',    'g',   'digital', 'input', { x: 48, y: 82 });
+      pins['COM2'] = createPin('COM2', 'COM', 'ground',  'input', { x: 53, y: 82 });
+      properties = { type: 'common_cathode', color: 'red' };
+      break;
+    }
+
+    case 'SEVEN_SEG_CA': {
+      pins['e']    = createPin('e',    'e',   'digital', 'input', { x: 8,  y: 82 });
+      pins['d']    = createPin('d',    'd',   'digital', 'input', { x: 13, y: 82 });
+      pins['COM1'] = createPin('COM1', 'COM', 'power',   'input', { x: 18, y: 82 });
+      pins['c']    = createPin('c',    'c',   'digital', 'input', { x: 23, y: 82 });
+      pins['dp']   = createPin('dp',   'dp',  'digital', 'input', { x: 28, y: 82 });
+      pins['b']    = createPin('b',    'b',   'digital', 'input', { x: 33, y: 82 });
+      pins['a']    = createPin('a',    'a',   'digital', 'input', { x: 38, y: 82 });
+      pins['f']    = createPin('f',    'f',   'digital', 'input', { x: 43, y: 82 });
+      pins['g']    = createPin('g',    'g',   'digital', 'input', { x: 48, y: 82 });
+      pins['COM2'] = createPin('COM2', 'COM', 'power',   'input', { x: 53, y: 82 });
+      properties = { type: 'common_anode', color: 'red' };
       break;
     }
 

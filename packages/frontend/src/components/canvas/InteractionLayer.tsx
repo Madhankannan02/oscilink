@@ -21,7 +21,7 @@ export const getComponentBounds = (comp: CircuitComponent) => {
       width = 70; height = 35; offsetX = -5; offsetY = -5;
       break;
     case 'PUSH_BUTTON':
-      width = 50; height = 50; offsetX = -5; offsetY = -5;
+      width = 30; height = 40; offsetX = 0; offsetY = 0;
       break;
     case 'POTENTIOMETER':
       width = 60; height = 60; offsetX = -5; offsetY = -5;
@@ -44,6 +44,10 @@ export const getComponentBounds = (comp: CircuitComponent) => {
       break;
     case 'ULTRASONIC_SENSOR':
       width = 208; height = 116; offsetX = -103; offsetY = -116;
+      break;
+    case 'SEVEN_SEG_CC':
+    case 'SEVEN_SEG_CA':
+      width = 60; height = 90; offsetX = 0; offsetY = 0;
       break;
     case 'RELAY':
       width = 70; height = 100; offsetX = -35; offsetY = -50;
