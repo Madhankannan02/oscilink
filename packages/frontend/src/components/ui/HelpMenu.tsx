@@ -39,10 +39,10 @@ export function HelpMenu() {
 
   return (
     <>
-      <div className="relative" ref={menuRef}>
+      <div className="relative flex items-center justify-center h-full" ref={menuRef}>
         <Tooltip position="bottom" content="Help & Resources">
           <button 
-            className={`p-2 rounded-md text-[#2C5E4A] hover:bg-[#2C5E4A]/10 transition-colors ${isOpen ? 'bg-[#2C5E4A]/15' : ''}`}
+            className={`flex items-center justify-center p-2 rounded-md text-[#2C5E4A] hover:bg-[#2C5E4A]/10 transition-colors ${isOpen ? 'bg-[#2C5E4A]/15' : ''}`}
             onClick={() => setIsOpen(!isOpen)}
           >
             <HelpCircle size={18} />

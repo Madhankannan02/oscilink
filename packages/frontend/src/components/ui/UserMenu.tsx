@@ -50,6 +50,7 @@ export function UserMenu() {
             alt="User Avatar" 
             className="w-full h-full rounded-full object-cover" 
             referrerPolicy="no-referrer"
+            crossOrigin="anonymous"
             onError={() => setImgError(true)}
           />
         ) : (

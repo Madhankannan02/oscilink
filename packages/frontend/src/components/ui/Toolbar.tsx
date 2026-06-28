@@ -186,13 +186,13 @@ export function Toolbar({ leftOpen, setLeftOpen, rightOpen, setRightOpen, errorP
             )}
 
             <Tooltip position="bottom" content="Toggle Editor Panel">
-              <button className={clsx('p-2 rounded-md hover:bg-[#2C5E4A]/10 text-[#2C5E4A] transition-colors', leftOpen && 'bg-[#2C5E4A]/15')} onClick={() => setLeftOpen(!leftOpen)}>
+              <button className={clsx('flex items-center justify-center p-2 rounded-md hover:bg-[#2C5E4A]/10 text-[#2C5E4A] transition-colors', leftOpen && 'bg-[#2C5E4A]/15')} onClick={() => setLeftOpen(!leftOpen)}>
                 <PanelLeft size={18} />
               </button>
             </Tooltip>
             
             <Tooltip position="bottom" content="Toggle Properties Panel">
-              <button className={clsx('p-2 rounded-md hover:bg-[#2C5E4A]/10 text-[#2C5E4A] transition-colors', rightOpen && 'bg-[#2C5E4A]/15')} onClick={() => setRightOpen(!rightOpen)}>
+              <button className={clsx('flex items-center justify-center p-2 rounded-md hover:bg-[#2C5E4A]/10 text-[#2C5E4A] transition-colors', rightOpen && 'bg-[#2C5E4A]/15')} onClick={() => setRightOpen(!rightOpen)}>
                 <PanelRight size={18} />
               </button>
             </Tooltip>
