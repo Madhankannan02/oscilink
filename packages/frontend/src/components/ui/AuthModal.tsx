@@ -104,17 +104,17 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Backdrop overlay */}
       <div 
-        className="absolute inset-0 bg-background/80 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity"
         onClick={handleClose}
       />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-md overflow-hidden rounded-xl bg-surface border border-border-default shadow-2xl flex flex-col transform transition-all animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-md overflow-hidden rounded-xl bg-white border border-gray-200 shadow-2xl flex flex-col transform transition-all animate-in fade-in zoom-in-95 duration-200">
         
         {/* Close Button */}
         <button 
           onClick={handleClose}
-          className="absolute right-4 top-4 p-1 rounded-md text-text-muted hover:text-text hover:bg-surface-hover transition-colors z-10"
+          className="absolute right-4 top-4 p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors z-10"
         >
           <X size={20} />
         </button>
@@ -122,15 +122,15 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         {view === 'main' ? (
           <>
             {/* Header Tabs */}
-            <div className="flex border-b border-border-default">
+            <div className="flex border-b border-gray-200">
               <button
-                className={`flex-1 py-4 text-sm font-medium transition-colors ${activeTab === 'signin' ? 'text-accent-blue border-b-2 border-accent-blue' : 'text-text-muted hover:text-text'}`}
+                className={`flex-1 py-4 text-sm font-bold transition-colors ${activeTab === 'signin' ? 'text-[#2C5E4A] border-b-2 border-[#2C5E4A]' : 'text-[#6A7B76] hover:text-[#2C5E4A]'}`}
                 onClick={() => { setActiveTab('signin'); setErrorMsg(''); }}
               >
                 Sign In
               </button>
               <button
-                className={`flex-1 py-4 text-sm font-medium transition-colors ${activeTab === 'signup' ? 'text-accent-blue border-b-2 border-accent-blue' : 'text-text-muted hover:text-text'}`}
+                className={`flex-1 py-4 text-sm font-bold transition-colors ${activeTab === 'signup' ? 'text-[#2C5E4A] border-b-2 border-[#2C5E4A]' : 'text-[#6A7B76] hover:text-[#2C5E4A]'}`}
                 onClick={() => { setActiveTab('signup'); setErrorMsg(''); }}
               >
                 Create Account
@@ -142,16 +142,16 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 
                 {/* Email Input */}
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-text-secondary">Email Address</label>
-                  <div className="relative">
-                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                  <label className="text-xs font-bold text-[#2C5E4A] uppercase tracking-wider">Email Address</label>
+                  <div className="relative mt-1">
+                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                       type="email"
                       required
                       autoFocus
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-elevated border border-border-default rounded-md py-2 pl-9 pr-3 text-sm text-text focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-colors"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg py-2.5 pl-9 pr-3 text-sm text-[#2C5E4A] focus:outline-none focus:bg-white focus:border-[#2C5E4A] focus:ring-1 focus:ring-[#2C5E4A] transition-colors placeholder-gray-400"
                       placeholder="you@example.com"
                     />
                   </div>
@@ -159,21 +159,21 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
                 {/* Password Input */}
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-text-secondary">Password</label>
-                  <div className="relative">
-                    <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                  <label className="text-xs font-bold text-[#2C5E4A] uppercase tracking-wider">Password</label>
+                  <div className="relative mt-1">
+                    <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                       type={showPassword ? "text" : "password"}
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-elevated border border-border-default rounded-md py-2 pl-9 pr-10 text-sm text-text focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-colors"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg py-2.5 pl-9 pr-10 text-sm text-[#2C5E4A] focus:outline-none focus:bg-white focus:border-[#2C5E4A] focus:ring-1 focus:ring-[#2C5E4A] transition-colors placeholder-gray-400"
                       placeholder="••••••••"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors"
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -181,16 +181,16 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   
                   {/* Password Strength Indicator (Sign Up only) */}
                   {activeTab === 'signup' && password.length > 0 && (
-                    <div className="pt-1 flex items-center justify-between">
+                    <div className="pt-2 flex items-center justify-between">
                       <div className="flex gap-1 w-full mr-3">
                         {[1, 2, 3, 4].map(level => (
                           <div 
                             key={level} 
-                            className={`h-1 flex-1 rounded-full ${passwordScore >= level ? getStrengthColor() : 'bg-border-subtle'}`}
+                            className={`h-1 flex-1 rounded-full ${passwordScore >= level ? getStrengthColor() : 'bg-gray-200'}`}
                           />
                         ))}
                       </div>
-                      <span className={`text-[10px] font-medium w-16 text-right ${getStrengthColor().replace('bg-', 'text-')}`}>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider w-16 text-right ${getStrengthColor().replace('bg-', 'text-')}`}>
                         {getStrengthLabel()}
                       </span>
                     </div>
@@ -199,16 +199,16 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
                 {/* Confirm Password (Sign Up only) */}
                 {activeTab === 'signup' && (
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-text-secondary">Confirm Password</label>
-                    <div className="relative">
-                      <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                  <div className="space-y-1 mt-1">
+                    <label className="text-xs font-bold text-[#2C5E4A] uppercase tracking-wider">Confirm Password</label>
+                    <div className="relative mt-1">
+                      <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                       <input
                         type={showPassword ? "text" : "password"}
                         required
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full bg-elevated border border-border-default rounded-md py-2 pl-9 pr-3 text-sm text-text focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-colors"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-lg py-2.5 pl-9 pr-3 text-sm text-[#2C5E4A] focus:outline-none focus:bg-white focus:border-[#2C5E4A] focus:ring-1 focus:ring-[#2C5E4A] transition-colors placeholder-gray-400"
                         placeholder="••••••••"
                       />
                     </div>
@@ -227,7 +227,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   <button 
                     type="button"
                     onClick={() => { setView('forgot_password'); setErrorMsg(''); }}
-                    className="text-xs text-accent-blue hover:text-blue-400 self-start mt-[-4px]"
+                    className="text-xs font-bold text-[#6A7B76] hover:text-[#2C5E4A] self-start mt-[-4px]"
                   >
                     Forgot your password?
                   </button>
@@ -237,7 +237,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full mt-2 bg-accent-blue hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium py-2 rounded-md transition-colors flex items-center justify-center gap-2 shadow-sm"
+                  className="w-full mt-3 bg-[#2C5E4A] hover:bg-[#1A382C] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm"
                 >
                   {isLoading ? <Loader2 size={16} className="animate-spin" /> : null}
                   {activeTab === 'signin' ? 'Sign In' : 'Create Account'}
@@ -245,8 +245,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </form>
 
               {/* OAuth Providers */}
-              <div className="mt-6 pt-6 border-t border-border-default relative">
-                <div className="absolute top-[-10px] left-1/2 -translate-x-1/2 bg-surface px-2 text-xs font-medium text-text-muted">
+              <div className="mt-8 pt-6 border-t border-gray-200 relative">
+                <div className="absolute top-[-9px] left-1/2 -translate-x-1/2 bg-white px-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                   OR CONTINUE WITH
                 </div>
                 
@@ -255,7 +255,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     type="button"
                     onClick={() => handleOAuth('github')}
                     disabled={isLoading}
-                    className="flex-1 flex items-center justify-center gap-2 bg-elevated hover:bg-surface-hover border border-border-default py-2 rounded-md text-sm font-medium transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-gray-50 border border-gray-200 py-2.5 rounded-lg text-[#2C5E4A] text-sm font-bold transition-colors shadow-sm"
                   >
                     <Github size={18} />
                     GitHub
@@ -264,7 +264,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     type="button"
                     onClick={() => handleOAuth('google')}
                     disabled={isLoading}
-                    className="flex-1 flex items-center justify-center gap-2 bg-elevated hover:bg-surface-hover border border-border-default py-2 rounded-md text-sm font-medium transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-gray-50 border border-gray-200 py-2.5 rounded-lg text-[#2C5E4A] text-sm font-bold transition-colors shadow-sm"
                   >
                     <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -281,30 +281,30 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         ) : (
           /* Forgot Password View */
           <div className="p-6">
-            <h3 className="text-lg font-semibold text-text mb-2 mt-2">Reset Password</h3>
-            <p className="text-sm text-text-secondary mb-6">
+            <h3 className="text-lg font-extrabold text-[#2C5E4A] mb-2 mt-2">Reset Password</h3>
+            <p className="text-sm text-[#6A7B76] mb-6">
               Enter your email address and we'll send you a link to reset your password.
             </p>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-text-secondary">Email Address</label>
-                <div className="relative">
-                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                <label className="text-xs font-bold text-[#2C5E4A] uppercase tracking-wider">Email Address</label>
+                <div className="relative mt-1">
+                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="email"
                     required
                     autoFocus
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-elevated border border-border-default rounded-md py-2 pl-9 pr-3 text-sm text-text focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-colors"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg py-2.5 pl-9 pr-3 text-sm text-[#2C5E4A] focus:outline-none focus:bg-white focus:border-[#2C5E4A] focus:ring-1 focus:ring-[#2C5E4A] transition-colors placeholder-gray-400"
                     placeholder="you@example.com"
                   />
                 </div>
               </div>
 
               {errorMsg && (
-                <div className="text-xs text-red-500 font-medium">
+                <div className="text-xs text-red-500 font-bold">
                   {errorMsg}
                 </div>
               )}
@@ -312,7 +312,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full mt-2 bg-accent-blue hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium py-2 rounded-md transition-colors flex items-center justify-center gap-2"
+                className="w-full mt-4 bg-[#2C5E4A] hover:bg-[#1A382C] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm"
               >
                 {isLoading ? <Loader2 size={16} className="animate-spin" /> : null}
                 Send Reset Email
@@ -321,7 +321,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               <button
                 type="button"
                 onClick={() => { setView('main'); setErrorMsg(''); }}
-                className="w-full mt-2 bg-transparent hover:bg-surface-hover text-text-secondary text-sm font-medium py-2 rounded-md transition-colors"
+                className="w-full mt-3 bg-transparent hover:bg-gray-100 text-[#6A7B76] hover:text-[#2C5E4A] text-sm font-bold py-3 rounded-lg transition-colors"
               >
                 Back to Sign In
               </button>
