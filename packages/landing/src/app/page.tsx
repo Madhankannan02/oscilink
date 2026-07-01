@@ -720,7 +720,7 @@ export default function Home() {
       </p>
 </div>
 <div class="flex flex-col items-center gap-4">
-<button class="font-bold px-12 py-5 rounded-lg flex items-center gap-2 hover:bg-secondary-fixed/90 transition-all soft-shadow text-lg bg-secondary-fixed text-on-secondary-fixed" onclick="window.location.href='/simulator'">
+<button class="font-bold px-12 py-5 rounded-lg flex items-center gap-2 hover:bg-secondary-fixed/90 transition-all soft-shadow text-lg bg-secondary-fixed text-on-secondary-fixed" onclick="window.location.href='http://localhost:5173/'">
         Open Simulator — It's Free
         <span class="material-symbols-outlined">arrow_forward</span>
 </button>
